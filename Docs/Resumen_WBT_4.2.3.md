@@ -156,12 +156,62 @@ Debe diferenciarse si el resultado pertenece a inicio frío, inicio caliente, ba
 ### Características de la estufa
 
 ```text
+tiempo_fase = tiempo_final_fase - tiempo_inicial_fase
 velocidad_combustion = combustible_consumido / tiempo_fase
-potencia_fuego = (combustible_seco_consumido × poder_calorifico_neto) / tiempo_fase
+energia_combustible = combustible_seco_consumido × poder_calorifico_neto
+potencia_fase = energia_combustible / tiempo_fase
+```
+
+El `tiempo_fase` se calcula con los registros de tiempo de cada fase:
+
+```text
+tiempo_inicio_frio = fin_inicio_frio - inicio_inicio_frio
+tiempo_inicio_caliente = fin_inicio_caliente - inicio_inicio_caliente
+tiempo_baja_potencia = fin_baja_potencia - inicio_baja_potencia
+```
+
+Para una prueba válida, `tiempo_baja_potencia` debe ser aproximadamente **45 minutos**, es decir, **2700 segundos**. En las fases de inicio frío e inicio caliente, el tiempo corresponde desde el encendido o inicio registrado hasta que la primera olla alcanza el punto de ebullición local.
+
+La velocidad de combustión se expresa normalmente en `g/min`. Para calcular la potencia en vatios (`W`), la energía debe estar en joules y el tiempo en segundos:
+
+```text
+potencia_fase (W) = energia_combustible (J) / tiempo_fase (s)
+```
+
+Si el poder calorífico está expresado en `MJ/kg` y la masa en gramos:
+
+```text
+energia_combustible (J) = combustible_seco (g) × poder_calorifico (MJ/kg)
+                         × 1000 J/g
+```
+
+Para reportar la alta potencia se pueden conservar los valores de cada fase:
+
+```text
+potencia_inicio_frio = energia_inicio_frio / tiempo_inicio_frio
+potencia_inicio_caliente = energia_inicio_caliente / tiempo_inicio_caliente
+```
+
+Si se necesita un único valor combinado de alta potencia, la forma recomendada es ponderar por el tiempo:
+
+```text
+potencia_alta = (energia_inicio_frio + energia_inicio_caliente)
+                / (tiempo_inicio_frio + tiempo_inicio_caliente)
+```
+
+La potencia de baja potencia se calcula con el combustible consumido durante la fase de 45 minutos:
+
+```text
+potencia_baja = energia_baja_potencia / tiempo_baja_potencia
+```
+
+Finalmente, la relación de reducción compara la potencia alta con la potencia baja:
+
+```text
 relacion_reduccion = potencia_alta / potencia_baja
 ```
 
-La velocidad se expresa normalmente en g/min y la potencia en energía/tiempo, normalmente W.
+El combustible consumido debe ser el equivalente seco y debe aplicarse la corrección por carbón residual cuando corresponda. La hoja oficial del WBT puede definir un método específico para combinar las fases, por lo que estas expresiones deben contrastarse con el Apéndice 4 o la hoja de cálculo oficial antes de implementarlas.
 
 ### Emisiones
 
