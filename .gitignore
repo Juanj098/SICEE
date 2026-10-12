@@ -13,4 +13,21 @@ Thumbs.db
 *.temp
 ~$*
 
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Pruebas y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Frontend (cuando lo crees)
+node_modules/
+dist/
+build/
+
 .env
+!.env.example
