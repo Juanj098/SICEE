@@ -277,3 +277,143 @@ PostgreSQL
 - Las validaciones deben poder probarse sin levantar el servidor.
 - Los reportes deben utilizar resultados procesados y no repetir fórmulas.
 - La persistencia debe estar separada de la lógica de negocio.
+
+
+## Archivos por módulo
+
+Cada módulo contiene únicamente los archivos que necesita. No todos requieren rutas, modelos o esquemas, y no se crean archivos vacíos por anticipado.
+
+### Qué hace cada tipo de archivo
+
+| Archivo | Función |
+|---|---|
+| `__init__.py` | Marca la carpeta como paquete. En módulos con endpoints define y expone el blueprint; en los demás queda vacío. |
+| `routes.py` | Endpoints HTTP. Recibe la solicitud, llama al servicio y devuelve la respuesta. No contiene lógica de negocio. |
+| `service.py` | Lógica del módulo e interfaz que usan los demás módulos. |
+| `models.py` | Modelos SQLAlchemy de las tablas que pertenecen al módulo. |
+| `schemas.py` | Validación de formato de entrada y serialización de salida. |
+| `repository.py` | Consultas a la base de datos, separadas de la lógica de negocio. Se crea solo cuando las consultas del servicio crecen. |
+
+### Estructura general
+
+```text
+SICEE/backend/app/
+├── __init__.py          # create_app() y registro de blueprints
+├── config.py            # configuración desde variables de entorno
+├── extensions.py        # db, migrate, cors
+├── shared/
+│   ├── errors.py        # excepciones propias y manejador de errores
+│   └── responses.py     # formato único de respuesta
+└── modules/
+    ├── investigadores/
+    ├── pruebas/
+    ├── validaciones/
+    ├── calculos/
+    ├── historial/
+    ├── reportes/
+    └── configuracion/
+```
+
+`shared/` contiene código transversal sin dominio propio. No es un módulo de negocio y no importa nada de `modules/`.
+
+### `investigadores`
+
+```text
+investigadores/
+├── __init__.py      # blueprint
+├── routes.py        # listar, obtener y registrar investigadores
+├── service.py       # lógica de consulta y registro
+├── models.py        # tabla investigador
+└── schemas.py       # validación de nombre y datos de contacto
+```
+
+### `pruebas`
+
+```text
+pruebas/
+├── __init__.py      # blueprint
+├── routes.py        # crear, consultar, iniciar y finalizar pruebas
+├── service.py       # orquesta el flujo: valida, guarda y solicita cálculos
+├── models.py        # prueba, fases, mediciones y resultados
+├── schemas.py       # formato de entrada y salida
+└── states.py        # transiciones permitidas entre estados de la prueba
+```
+
+`pruebas` es el módulo central. Llama a `validaciones` antes de guardar y a `calculos` para obtener los resultados, que luego persiste en sus propias tablas.
+
+### `validaciones`
+
+```text
+validaciones/
+├── __init__.py      # vacío
+├── service.py       # interfaz pública: validar_prueba(), validar_fase()
+└── rules.py         # reglas de obligatoriedad, rango, consistencia, protocolo y estado
+```
+
+No tiene rutas, modelos ni acceso a la base de datos. Recibe datos, aplica las reglas y devuelve los errores encontrados, por lo que se puede probar sin levantar Flask.
+
+### `calculos`
+
+```text
+calculos/
+├── __init__.py      # vacío
+├── wbt.py           # fórmulas del WBT 4.2.3 como funciones puras
+├── processors.py    # organiza mediciones (Pandas/NumPy) y arma resultados por fase y generales
+└── service.py       # interfaz pública: calcular_resultados(prueba)
+```
+
+No tiene rutas ni modelos y no importa Flask ni SQLAlchemy. Recibe mediciones y devuelve resultados; guardarlos es responsabilidad de `pruebas`. Los parámetros del protocolo se leen de `configuracion`, no se escriben dentro de las fórmulas.
+
+### `historial`
+
+```text
+historial/
+├── __init__.py      # blueprint
+├── routes.py        # listar, buscar, filtrar y consultar el detalle
+├── service.py       # consultas con filtros, orden y paginación
+└── schemas.py       # formato de los filtros y de la respuesta
+```
+
+No tiene modelos propios: lee las tablas de `pruebas` a través de su servicio. Debe cumplir el requisito de mostrar hasta 500 registros en menos de 3 segundos.
+
+### `reportes`
+
+```text
+reportes/
+├── __init__.py      # blueprint
+├── routes.py        # generar, reintentar y descargar el reporte
+├── service.py       # verifica que la prueba esté finalizada, consulta datos y orquesta la generación
+├── pdf.py           # construcción del documento PDF
+├── charts.py        # gráficas de temperatura, consumo y emisiones
+└── models.py        # estado de generación (GENERANDO, GENERADO, ERROR)
+```
+
+`models.py` solo es necesario si el estado del reporte se guarda en la base de datos. Usa resultados ya procesados y no repite fórmulas.
+
+### `configuracion`
+
+```text
+configuracion/
+├── __init__.py      # vacío
+├── constants.py     # parámetros del protocolo (duración de baja potencia, temperaturas de referencia)
+├── enums.py         # estados de prueba y reporte, tipos de fase, unidades de medida
+└── service.py       # lectura de parámetros para los demás módulos
+```
+
+Al inicio los valores viven en código. Si más adelante deben poder modificarse sin desplegar, se agrega `models.py` y `routes.py`.
+
+### Resumen
+
+| Módulo | `routes` | `service` | `models` | `schemas` | Otros |
+|---|---|---|---|---|---|
+| `investigadores` | sí | sí | sí | sí | |
+| `pruebas` | sí | sí | sí | sí | `states.py` |
+| `validaciones` | no | sí | no | no | `rules.py` |
+| `calculos` | no | sí | no | no | `wbt.py`, `processors.py` |
+| `historial` | sí | sí | no | sí | |
+| `reportes` | sí | sí | opcional | no | `pdf.py`, `charts.py` |
+| `configuracion` | no | sí | no | no | `constants.py`, `enums.py` |
+
+### Regla de dependencia
+
+Los módulos se comunican a través del `service.py` del otro módulo, nunca importando sus modelos ni funciones internas. Las dependencias son las del diagrama de la sección anterior, y no se permiten dependencias circulares.

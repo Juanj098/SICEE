@@ -4,7 +4,7 @@ from . import ibp, services
 def _a_dict(investigador):
     return {"id":investigador.id, "nombre": investigador.nombre}
 
-@ibp.get("")
+@ibp.get("/")
 def listar():
     return [_a_dict(i) for i in services.listar()]
 
