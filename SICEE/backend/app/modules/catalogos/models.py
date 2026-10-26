@@ -23,7 +23,7 @@ class Combustibles(db.Model):
     __tablename__="combustible"
 
     id = db.Column(db.Integer, primary_key=True)                #INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tipo = db.Column(db.String(100), nullable=False)                            #VARCHAR(100) NOT NULL,
+    tipo = db.Column(db.String(100), nullable=False)            #VARCHAR(100) NOT NULL,
     tamanio_cm = db.Column(db.Numeric(8,2))                     #DECIMAL(8,2),
     peso_kg = db.Column(db.Numeric(8,4))                        #DECIMAL(8,4),
     humedad_pct = db.Column(db.Numeric(5,2))                    #DECIMAL(5,2),
