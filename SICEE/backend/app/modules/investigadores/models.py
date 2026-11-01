@@ -5,3 +5,5 @@ class Investigador(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150), nullable=False)
+
+    pruebas_wbt = db.relationship("PruebaWBT", back_populates="investigador")
