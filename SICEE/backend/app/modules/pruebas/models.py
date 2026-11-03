@@ -1,7 +1,8 @@
 from app.extensions import db
-from datetime import date, datetime, time
+from datetime import date, datetime, timezone
+import uuid
 
-#condiciones_ambientales
+# condiciones_ambientales
 class Cond_Ambientales(db.Model):
     __tablename__="condiciones_ambientales"
 
@@ -19,7 +20,7 @@ class PruebaWBT(db.Model):
     __tablename__="prueba_wbt"
 
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(db.String(32), nullable=False)
+    uuid = db.Column(db.Uuid, unique=True, default = uuid.uuid4, nullable=False)
     fecha = db.Column(db.Date, nullable=False, default=date.today)
     investigador_id = db.Column(db.Integer, db.ForeignKey("investigador.id"), nullable=False)
     laboratorio_id = db.Column(db.Integer, db.ForeignKey("laboratorio.id"), nullable=False)
@@ -27,8 +28,8 @@ class PruebaWBT(db.Model):
     combustible_id = db.Column(db.Integer, db.ForeignKey("combustible.id"), nullable=False)
     condiciones_ambientales_id = db.Column(db.Integer, db.ForeignKey("condiciones_ambientales.id"), nullable=False)
     observaciones = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     investigador = db.relationship("Investigador", back_populates = "pruebas_wbt")
     laboratorio = db.relationship("Laboratorio", back_populates = "pruebas_wbt")
@@ -38,7 +39,7 @@ class PruebaWBT(db.Model):
 
     fase_prueba = db.relationship("FasePrueba", back_populates = "pruebas_wbt")
 
-#fase_prueba
+# fase_prueba
 class FasePrueba(db.Model):
     __tablename__="fase_prueba"
 
@@ -58,8 +59,9 @@ class FasePrueba(db.Model):
 
     pruebas_wbt = db.relationship("PruebaWBT", back_populates="fase_prueba")
     mediciones = db.relationship("MedicionesOps", back_populates="fase_prueba")
+    resultados = db.relationship("resultados_fase", back_populates="fase_prueba")
 
-#mediciones_opcionales
+# mediciones_opcionales
 class MedicionesOps(db.Model):
     __tablename__="mediciones_opcionales"
 
@@ -72,4 +74,3 @@ class MedicionesOps(db.Model):
     presion_atm_kpa = db.Column(db.Numeric(7,3))
 
     fase_prueba = db.relationship("FasePrueba", back_populates = "mediciones")
-
