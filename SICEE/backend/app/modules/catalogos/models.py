@@ -8,6 +8,8 @@ class Laboratorio(db.Model):
     direccion = db.Column(db.String(255), nullable=False)
     descripcion = db.Column(db.String(500))
 
+    pruebas_wbt = db.relationship("PruebaWBT", back_populates="laboratorio")
+
 class Estufas(db.Model):
     __tablename__="estufa"
 
@@ -18,6 +20,8 @@ class Estufas(db.Model):
     altura_cm = db.Column(db.Numeric(10,2))
     material = db.Column(db.String(100))
     descripcion = db.Column(db.String(500))
+
+    pruebas_wbt = db.relationship("PruebaWBT", back_populates="estufa")
 
 class Combustibles(db.Model):
     __tablename__="combustible"
@@ -31,3 +35,5 @@ class Combustibles(db.Model):
     poder_calorifico_bruto_mj_kg = db.Column(db.Numeric(8,3))   #DECIMAL(8,3),
     tipo_alimentacion = db.Column(db.String(100))               #VARCHAR(100),
     contenido_carbono_pct = db.Column(db.Numeric(5,2))          #DECIMAL(5,2)
+
+    pruebas_wbt = db.relationship("PruebaWBT", back_populates="combustible")

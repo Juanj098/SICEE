@@ -17,6 +17,12 @@ def create_app():
 
     from app.modules.catalogos import bp as catalogos_bp
     app.register_blueprint(catalogos_bp, url_prefix="/api/catalogos")
+
+    from app.modules.pruebas import bp as pruebas_bp
+    app.register_blueprint(pruebas_bp, url_prefix='/api/pruebas')
+
+    from app.modules.calculos import bp as calculos_bp
+    app.register_blueprint(calculos_bp, url_prefix='/api/calculos')
     
     # endpoint health
     @app.get("/api/health")
