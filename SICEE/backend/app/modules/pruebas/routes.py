@@ -2,10 +2,22 @@ from flask import request
 from . import bp, services
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from uuid import UUID
+
+
+def _json_value(valor):
+    if isinstance(valor, Decimal):
+        return float(valor)
+    if isinstance(valor, (datetime, date)):
+        return valor.isoformat()
+    if isinstance(valor, UUID):
+        return str(valor)
+    return valor
+
 
 def _a_dict(obj):
-    return{
-        columna.name: getattr(obj, columna.name)
+    return {
+        columna.name: _json_value(getattr(obj, columna.name))
         for columna in obj.__table__.columns
     }
 
@@ -26,12 +38,37 @@ def list_condiciones_ambientales():
 @bp.post('/condiciones_ambientales')
 def crear_condiciones_ambientales():
     datos = request.get_json(silent=True) or {}
-    temperatura = float(datos.get('temperatura') or 0) 
-    humedad = float(datos.get('humedad_pct') or 0)
-    presion_atm = float(datos.get('presion_atm') or 0) 
-    viento = float(datos.get('viento') or 0) 
-    pto_ebullicion = float(datos.get('pto_ebullicion') or 0)
-    condiciones_ambientales = services.crear_condicion_ambiental(pto_ebullicion, temperatura, humedad, presion_atm, viento)
+    try:
+        condiciones_ambientales = services.crear_condicion_ambiental(
+            temperatura_c=(
+                float(datos['temperatura_c'])
+                if datos.get('temperatura_c') is not None
+                else None
+            ),
+            humedad_relativa_pct=(
+                float(datos['humedad_relativa_pct'])
+                if datos.get('humedad_relativa_pct') is not None
+                else None
+            ),
+            presion_atmosferica_kpa=(
+                float(datos['presion_atmosferica_kpa'])
+                if datos.get('presion_atmosferica_kpa') is not None
+                else None
+            ),
+            viento_ms=(
+                float(datos['viento_ms'])
+                if datos.get('viento_ms') is not None
+                else None
+            ),
+            punto_ebullicion_c=(
+                float(datos['punto_ebullicion_c'])
+                if datos.get('punto_ebullicion_c') is not None
+                else None
+            ),
+        )
+    except (TypeError, ValueError) as exc:
+        return {'error': f'Datos inválidos: {exc}'}, 400
+
     return _a_dict(condiciones_ambientales), 201
 
 # /---Prueba_WBT---/
@@ -55,9 +92,9 @@ def registrar_prueba_wbt():
     except (TypeError, ValueError) as exc:
         return {
             'error': f'Datos Invalidos: {exc}'
-        }
-    observaciones = (datos['observaciones'] or '').strip()    
-    fecha = date.today()
+        }, 400
+    observaciones = (datos.get('observaciones') or '').strip()
+    fecha = datetime.now()
 
     prueba = services.registrar_Prueba_wbt(
         fecha,
