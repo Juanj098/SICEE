@@ -168,3 +168,6 @@ El sistema utilizará una arquitectura **monolitica modular**, implementada con 
 ### Diagrama de Despliegue
 
 ![D_Despliegue](./img/D_deploy.png)
+
+## Diagrama Entidad-Relacion
+![er](./img/er-sicee.png)

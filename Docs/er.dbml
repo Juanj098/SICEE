@@ -1,0 +1,104 @@
+
+// --------------SICEE--------------
+
+Table investigador {
+    id integer [primary key]
+    nombre varchar
+}
+
+Table laboratorio {
+    id integer [primary key]
+    institucion varchar
+    direccion varchar
+    descripcion varchar
+}
+
+Table estufa {
+    id integer [primary key]
+    marca varchar
+    fabricante varchar
+    area_camara_cm2 decimal(12,4)
+    altura_cm decimal(12,4)
+    material varchar
+    descripcion varchar
+}
+
+Table condiciones_ambientales {
+    id integer [primary key]
+    temperatura decimal(6,2)
+    humedad_relativa_pct decimal(5,4)
+    presion_atmosferica_kpa decimal(7,3)
+    viento_ms decimal(5,2)
+    punto_ebullicion_c decimal(6,4)
+}
+
+Table combustible {
+  id integer [primary key]
+  tipo varchar [not null]
+  tamanio_cm decimal(8,2)
+  peso_kg decimal(8,4)
+  humedad_pct decimal(5,2)
+  poder_calorifico_neto_mj_kg decimal(8,3)
+  poder_calorifico_bruto_mj_kg decimal(8,3)
+  tipo_alimentacion varchar
+  contenido_carbono_pct decimal(5,2)
+}
+
+Table fase_prueba {
+  id integer [primary key]
+  prueba_wbt_id integer [not null, ref: > prueba_wbt.id] 
+  tipo_fase tipo_fase_enum [not null]
+  numero_repeticion integer [not null]
+  t_inicial datetime(3)
+  t_final datetime(3)
+  temperatura_inicial_agua_c decimal(5,2)
+  temperatura_final_agua_c decimal(5,2)
+  peso_olla_seco_kg decimal(8,4)
+  peso_olla_agua_inicial_kg decimal(8,4)
+  peso_olla_agua_final_kg decimal(8,4)
+  peso_combustible_inicial_kg decimal(8,4)
+  peso_combustible_final_kg decimal(8,4)
+}
+
+
+Table prueba_wbt {
+  id integer [primary key]
+  uuid varchar [not null]
+  fecha datetime
+  investigador_id integer [not null, ref: > investigador.id]
+  laboratorio_id integer [not null, ref: > laboratorio.id]
+  estufa_id integer [not null, ref: > estufa.id] 
+  combustible_id integer [not null, ref: > combustible.id]
+  condiciones_ambientales_id integer [not null, ref: > condiciones_ambientales.id]
+  observaciones varchar
+  created_at datetime
+  updated_at datetime
+}
+
+Table resultado_fase {
+  id integer [primary key]
+  fase_id integer [ref: - fase_prueba.id]
+  tiempo_fase datetime
+  masa_agua_inicial decimal(6,2)
+  masa_agua_final decimal(6,2)
+  masa_agua_evaporada decimal(6,4)
+  combustible_consumido decimal(6,4)
+  tiempo_ebullicion decimal(8,2)
+  energia_util decimal(8,3)
+  energia_combustible decimal(8,3)
+  eficiencia_termica decimal(8,3)
+  consumo_especifico decimal(8,3)
+  velocidad_combustion decimal(8,3)
+  potencia_fase decimal(8,3)
+  humedad_promedio decimal(8,3)
+}
+
+Table mediciones_opcionales {
+  id integer [primary key]
+  fase_id integer [not null, unique, ref: - fase_prueba.id]
+  co_ppm decimal(10,3)
+  pm_mg_m3 decimal(10,3)
+  co2_ppm decimal(10,3)
+  temperatura_ducto_c decimal(7,2)
+  presion_atmosferica_kpa decimal(7,3)
+}
