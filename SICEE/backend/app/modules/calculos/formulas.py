@@ -28,7 +28,20 @@ def t_ebullicion(tiempo_final, tiempo_inicial):
     if tiempo_final < tiempo_inicial:
         raise ValueError('timpo_final no puede ser anterior a tiempo_inicial')
 
-    return round(tiempo_final - tiempo_inicial).total_seconds()/60
+    return round((tiempo_final - tiempo_inicial).total_seconds() / 60, 2)
+
+def Tiempo_fase_min(tiempo_incial, tiempo_final):
+    if tiempo_final is None or tiempo_incial is None:
+        return None
+    if isinstance(tiempo_incial, str):
+        tiempo_incial = datetime.fromisoformat(tiempo_incial)
+
+    if isinstance(tiempo_final, str):
+        tiempo_final = datetime.fromisoformat(tiempo_final)
+
+    if tiempo_final < tiempo_incial:
+        raise ValueError('Tiempo_final no puede ser anterior a Tiempo_final')
+    return round((tiempo_final - tiempo_incial).total_seconds() / 60, 2)
 
 # /--- Combustible_consumido ---/
 def m_combustible_consumido(m_combustible_inicial, m_combustible_final):
@@ -62,6 +75,7 @@ def Q_util(m_olla_agua_i, m_olla_agua_f, m_olla_seca, temp_i, temp_f):
 
 # /--- Eficiencia_termica ---/
 def Q_combustible(m_combustible_i, m_combustible_f, humedad_combustible, PCI):
+    # PCI -> poder_calorifico_neto
     q_combustible = m_combustible_seco(m_combustible_i, m_combustible_f, humedad_combustible) * PCI
     return q_combustible
 
@@ -84,3 +98,14 @@ def Consumo_energetico(peso_olla_agua_i, peso_olla_seco, temp_i, temp_f, pto_ebu
     return consumo_energetico
 
 # /--- Caracterizacion de estufa ---/
+def Velocidad_combustion(peso_combustible_i_kg, peso_combustible_f_kg, tiempo_inicial, tiempo_final):
+    combustible_consumido_g = (peso_combustible_i_kg - peso_combustible_f_kg)*1000
+    tiempo_fase = Tiempo_fase_min(tiempo_inicial, tiempo_final)
+    return combustible_consumido_g / tiempo_fase
+
+def Potencia_fuego_kw (m_combustible_i, m_combustible_f, humedad_combustible, pci, tiempo_inicial, tiempo_final):
+    combustible_seco_kg = m_combustible_seco(m_combustible_i, m_combustible_f, humedad_combustible)
+    energia_kj = (combustible_seco_kg*pci)*1000
+    tiempo_fase_s = Tiempo_fase_min(tiempo_inicial, tiempo_final)*60
+
+    return energia_kj / tiempo_fase_s
