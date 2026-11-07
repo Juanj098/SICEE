@@ -6,41 +6,44 @@ Esta estructura corresponde a la arquitectura propuesta para SICEE como un **mon
 SICEE/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── config.py
-│   │   ├── extensions.py
-│   │   ├── routes/
-│   │   │   ├── pruebas_routes.py
-│   │   │   ├── historial_routes.py
-│   │   │   └── reportes_routes.py
-│   │   ├── modules/
-│   │   │   ├── pruebas_wbt/
-│   │   │   │   ├── models.py
-│   │   │   │   ├── schemas.py
-│   │   │   │   ├── service.py
-│   │   │   │   └── validators.py
-│   │   │   ├── calculos/
-│   │   │   │   ├── formulas_wbt.py
-│   │   │   │   ├── processors.py
-│   │   │   │   └── validators.py
-│   │   │   ├── historial/
-│   │   │   │   └── service.py
-│   │   │   ├── reportes/
-│   │   │   │   ├── pdf_service.py
-│   │   │   │   └── chart_service.py
-│   │   │   └── configuracion/
-│   │   │       └── service.py
-│   │   ├── repositories/
-│   │   ├── database/
-│   │   └── shared/
-│   │       ├── errors.py
-│   │       ├── responses.py
-│   │       └── utils.py
+│   │   ├── __init__.py              # create_app(), registra los blueprints
+│   │   ├── config.py                # configuración por entorno (.env)
+│   │   ├── extensions.py            # db, migrate, cors
+│   │   ├── shared/
+│   │   │   ├── __init__.py
+│   │   │   ├── errors.py            # excepciones y manejadores de error
+│   │   │   └── responses.py         # formato único de respuesta
+│   │   └── modules/
+│   │       ├── __init__.py
+│   │       ├── investigadores/
+│   │       │   ├── __init__.py      # expone el blueprint
+│   │       │   ├── models.py
+│   │       │   ├── schemas.py
+│   │       │   ├── routes.py
+│   │       │   └── service.py
+│   │       ├── pruebas/
+│   │       │   ├── __init__.py
+│   │       │   ├── models.py
+│   │       │   ├── schemas.py
+│   │       │   ├── routes.py
+│   │       │   ├── service.py
+│   │       │   └── validators.py
+│   │       ├── calculos/
+│   │       │   ├── __init__.py
+│   │       │   └── wbt.py           # fórmulas puras, sin Flask ni BD
+│   │       ├── historial/
+│   │       │   ├── __init__.py
+│   │       │   ├── routes.py
+│   │       │   └── service.py
+│   │       └── reportes/
+│   │           ├── __init__.py
+│   │           ├── routes.py
+│   │           ├── pdf.py
+│   │           └── charts.py
 │   ├── migrations/
 │   ├── tests/
 │   │   ├── unit/
-│   │   ├── integration/
-│   │   └── fixtures/
+│   │   └── integration/
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── run.py
