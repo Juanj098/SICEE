@@ -1,5 +1,10 @@
 
 // --------------SICEE--------------
+enum tipo_fase_enum {
+  cold_start [note: 'Inicio frio, alta potencia']
+  hot_start  [note: 'Inicio caliente, alta potencia']
+  simmer     [note: 'Baja potencia, 45min ']
+}
 
 Table investigador {
     id integer [primary key]
@@ -19,6 +24,7 @@ Table estufa {
     fabricante varchar
     area_camara_cm2 decimal(12,4)
     altura_cm decimal(12,4)
+    no_hornillas integer
     material varchar
     descripcion varchar
 }
@@ -26,40 +32,64 @@ Table estufa {
 Table condiciones_ambientales {
     id integer [primary key]
     temperatura decimal(6,2)
-    humedad_relativa_pct decimal(5,4)
+    humedad_relativa_pct decimal(5,2)
+    altitud_m decimal(7,2)
     presion_atmosferica_kpa decimal(7,3)
     viento_ms decimal(5,2)
-    punto_ebullicion_c decimal(6,4)
+    condicion_viento varchar(500)
+    punto_ebullicion_c decimal(6,2)
 }
 
 Table combustible {
   id integer [primary key]
   tipo varchar [not null]
   tamanio_cm decimal(8,2)
-  peso_kg decimal(8,4)
   humedad_pct decimal(5,2)
   poder_calorifico_neto_mj_kg decimal(8,3)
   poder_calorifico_bruto_mj_kg decimal(8,3)
-  tipo_alimentacion varchar
+  poder_calorifico_carbon_mj_kg decimal(8,3)
+  contenido_carbono_carbon_pct decimal(5,2)
+  tipo_alimentacion varchar(100)
   contenido_carbono_pct decimal(5,2)
+  descripcion varchar(500)
 }
 
 Table fase_prueba {
   id integer [primary key]
   prueba_wbt_id integer [not null, ref: > prueba_wbt.id] 
   tipo_fase tipo_fase_enum [not null]
-  numero_repeticion integer [not null]
   t_inicial datetime(3)
   t_final datetime(3)
-  temperatura_inicial_agua_c decimal(5,2)
-  temperatura_final_agua_c decimal(5,2)
-  peso_olla_seco_kg decimal(8,4)
-  peso_olla_agua_inicial_kg decimal(8,4)
-  peso_olla_agua_final_kg decimal(8,4)
   peso_combustible_inicial_kg decimal(8,4)
   peso_combustible_final_kg decimal(8,4)
+  peso_carbon_con_recipiente_kg decimal(8,4)
+  peso_cenizas_kg decimal(8,4)
+  observaciones varchar(500)
 }
 
+Table olla {
+  id integer [primary key]
+  prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
+  n_olla integer 
+  peso_Seco_kg decimal(8,4)
+  capacidad_l decimal(5,2)
+}
+
+Table olla_fase {
+  id integer [primary key]
+  olla_id integer [not null, ref: > olla.id]
+  fase_id integer [not null, ref: > fase_prueba.id]
+  temperatura_inicial_agua_c decimal(5,2)
+  temperatura_final_agua_c decimal(5,2)
+  peso_con_agua_i_kg decimal(8,4)
+  peso_con_agua_f_kg decimal(8,4)
+}
+
+Table conjunto_pruebas {
+  id integer [primary key]
+  estufa_id integer [not null, ref: > estufa.id]
+  descripcion varchar(500)
+}
 
 Table prueba_wbt {
   id integer [primary key]
@@ -70,6 +100,12 @@ Table prueba_wbt {
   estufa_id integer [not null, ref: > estufa.id] 
   combustible_id integer [not null, ref: > combustible.id]
   condiciones_ambientales_id integer [not null, ref: > condiciones_ambientales.id]
+  conjunto_pruebas_id integer [not null, ref: > conjunto_pruebas.id]
+  peso_recipiente_carbon_kg decimal(8,4)
+  n_repeticiones integer
+  es_valida boolean
+  motivo_invalidez varchar(500)
+  version_protocolo varchar(10)
   observaciones varchar
   created_at datetime
   updated_at datetime
@@ -78,19 +114,22 @@ Table prueba_wbt {
 Table resultado_fase {
   id integer [primary key]
   fase_id integer [ref: - fase_prueba.id]
-  tiempo_fase datetime
-  masa_agua_inicial decimal(6,2)
-  masa_agua_final decimal(6,2)
-  masa_agua_evaporada decimal(6,4)
+  tiempo_fase_min decimal(8,2)
+  masa_agua_inicial_kg decimal(6,2)
+  masa_agua_final_kg decimal(6,2)
+  masa_agua_evaporada_kg decimal(6,4)
+  masa_agua_efectiva_kg decimal(6,4)
   combustible_consumido decimal(6,4)
-  tiempo_ebullicion decimal(8,2)
-  energia_util decimal(8,3)
-  energia_combustible decimal(8,3)
-  eficiencia_termica decimal(8,3)
-  consumo_especifico decimal(8,3)
-  velocidad_combustion decimal(8,3)
-  potencia_fase decimal(8,3)
-  humedad_promedio decimal(8,3)
+  tiempo_ebullicion_min decimal(8,3)
+  tiempo_ebullicion_corregido_min decimal(8,3)
+  energia_util_kj decimal(8,3)
+  energia_combustible_kj decimal(8,3)
+  eficiencia_termica_pct decimal(8,3)
+  consumo_especifico_g_l decimal(8,3)
+  velocidad_combustion_g_min decimal(8,3)
+  potencia_fase_kw decimal(8,3)
+  energia_especifica_corregida_kj_l decimal(8,3)
+  combustible_Seco_equivalente_kg decimal(6,4)
 }
 
 Table mediciones_opcionales {
