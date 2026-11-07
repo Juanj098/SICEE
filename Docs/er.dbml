@@ -1,9 +1,9 @@
 
 // --------------SICEE--------------
 enum tipo_fase_enum {
-  cold_start [note: 'Inicio frio, alta potencia']
-  hot_start  [note: 'Inicio caliente, alta potencia']
-  simmer     [note: 'Baja potencia, 45min ']
+  inicio_frio     [note: 'Inicio frío, alta potencia']
+  inicio_caliente [note: 'Inicio caliente, alta potencia']
+  baja_potencia   [note: 'Baja potencia, 45 min']
 }
 
 Table investigador {
@@ -24,19 +24,19 @@ Table estufa {
     fabricante varchar
     area_camara_cm2 decimal(12,4)
     altura_cm decimal(12,4)
-    no_hornillas integer
+    numero_hornillas integer
     material varchar
     descripcion varchar
 }
 
 Table condiciones_ambientales {
     id integer [primary key]
-    temperatura decimal(6,2)
+    temperatura_c decimal(6,2)
     humedad_relativa_pct decimal(5,2)
     altitud_m decimal(7,2)
     presion_atmosferica_kpa decimal(7,3)
     viento_ms decimal(5,2)
-    condicion_viento varchar(500)
+    condicion_viento varchar(50)
     punto_ebullicion_c decimal(6,2)
 }
 
@@ -56,7 +56,7 @@ Table combustible {
 
 Table fase_prueba {
   id integer [primary key]
-  prueba_wbt_id integer [not null, ref: > prueba_wbt.id] 
+  prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
   tipo_fase tipo_fase_enum [not null]
   t_inicial datetime(3)
   t_final datetime(3)
@@ -65,14 +65,22 @@ Table fase_prueba {
   peso_carbon_con_recipiente_kg decimal(8,4)
   peso_cenizas_kg decimal(8,4)
   observaciones varchar(500)
+
+  indexes {
+    (prueba_wbt_id, tipo_fase) [unique]
+  }
 }
 
 Table olla {
   id integer [primary key]
   prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
-  n_olla integer 
-  peso_Seco_kg decimal(8,4)
+  numero_olla integer [not null]
+  peso_seco_kg decimal(8,4)
   capacidad_l decimal(5,2)
+
+  indexes {
+    (prueba_wbt_id, numero_olla) [unique]
+  }
 }
 
 Table olla_fase {
@@ -81,8 +89,14 @@ Table olla_fase {
   fase_id integer [not null, ref: > fase_prueba.id]
   temperatura_inicial_agua_c decimal(5,2)
   temperatura_final_agua_c decimal(5,2)
-  peso_con_agua_i_kg decimal(8,4)
-  peso_con_agua_f_kg decimal(8,4)
+  peso_con_agua_inicial_kg decimal(8,4)
+  peso_con_agua_final_kg decimal(8,4)
+
+  indexes {
+    (olla_id, fase_id) [unique]
+  }
+
+  Note: 'La masa de agua se obtiene con peso_con_agua_inicial_kg o peso_con_agua_final_kg menos olla.peso_seco_kg.'
 }
 
 Table conjunto_pruebas {
@@ -93,33 +107,36 @@ Table conjunto_pruebas {
 
 Table prueba_wbt {
   id integer [primary key]
-  uuid varchar [not null]
-  fecha datetime
+  uuid uuid [not null, unique, default: `gen_random_uuid()`]
+  fecha datetime [not null]
   investigador_id integer [not null, ref: > investigador.id]
   laboratorio_id integer [not null, ref: > laboratorio.id]
-  estufa_id integer [not null, ref: > estufa.id] 
   combustible_id integer [not null, ref: > combustible.id]
   condiciones_ambientales_id integer [not null, ref: > condiciones_ambientales.id]
   conjunto_pruebas_id integer [not null, ref: > conjunto_pruebas.id]
   peso_recipiente_carbon_kg decimal(8,4)
-  n_repeticiones integer
-  es_valida boolean
+  numero_repeticion integer [not null, default: 1]
+  es_valida boolean [not null, default: true]
   motivo_invalidez varchar(500)
-  version_protocolo varchar(10)
+  version_protocolo varchar(10) [not null, default: '4.2.3']
   observaciones varchar
-  created_at datetime
-  updated_at datetime
+  created_at datetime [not null, default: `now()`]
+  updated_at datetime [not null, default: `now()`]
+
+  indexes {
+    (conjunto_pruebas_id, numero_repeticion) [unique]
+  }
 }
 
 Table resultado_fase {
   id integer [primary key]
-  fase_id integer [ref: - fase_prueba.id]
+  fase_id integer [not null, unique, ref: - fase_prueba.id]
   tiempo_fase_min decimal(8,2)
-  masa_agua_inicial_kg decimal(6,2)
-  masa_agua_final_kg decimal(6,2)
+  masa_agua_inicial_kg decimal(8,4)
+  masa_agua_final_kg decimal(8,4)
   masa_agua_evaporada_kg decimal(6,4)
   masa_agua_efectiva_kg decimal(6,4)
-  combustible_consumido decimal(6,4)
+  combustible_consumido_kg decimal(6,4)
   tiempo_ebullicion_min decimal(8,3)
   tiempo_ebullicion_corregido_min decimal(8,3)
   energia_util_kj decimal(8,3)
@@ -129,15 +146,83 @@ Table resultado_fase {
   velocidad_combustion_g_min decimal(8,3)
   potencia_fase_kw decimal(8,3)
   energia_especifica_corregida_kj_l decimal(8,3)
-  combustible_Seco_equivalente_kg decimal(6,4)
+  combustible_seco_equivalente_kg decimal(6,4)
+  cambio_carbon_kg decimal(6,4)
+  consumo_especifico_corregido_g_l decimal(8,3)
+
+  Note: 'Resultado agregado por fase. Las masas y energías de agua se suman sobre todas las ollas de olla_fase; el combustible y los tiempos son de la fase.'
 }
 
 Table mediciones_opcionales {
   id integer [primary key]
   fase_id integer [not null, unique, ref: - fase_prueba.id]
-  co_ppm decimal(10,3)
-  pm_mg_m3 decimal(10,3)
-  co2_ppm decimal(10,3)
   temperatura_ducto_c decimal(7,2)
-  presion_atmosferica_kpa decimal(7,3)
+  co_ppm decimal(10,3)
+  pm_ug_m3 decimal(10,3)
+  co2_ppm decimal(10,3)
+  co2_fondo_ppm decimal(10,3)
+  co_fondo_ppm decimal(10,3)
+  pm_fondo_ug_m3 decimal(10,3)
+  co2_total_g decimal(12,3)
+  co_total_g decimal(12,3)
+  pm_total_g decimal(12,6)
+
+  Note: 'co_ppm, co2_ppm y pm_ug_m3 son promedios de la fase. Los totales en gramos solo se llenan cuando el método de cálculo es 3 (totales ingresados).'
+
+}
+
+Table emisiones_prueba {
+  id integer [primary key]
+  prueba_wbt_id integer [not null, unique, ref: - prueba_wbt.id]
+  caudal_campana_m3_h decimal(10,3)
+  metodo_captura varchar
+  metodo_calculo integer
+  intervalo_muestreo_s integer
+  delta_p_pitot_pa decimal(10,3)
+
+  Note: 'metodo_calculo: 1 = balance de carbono, 2 = captura total, 3 = totales ingresados.'
+}
+
+Table resultado_emisiones_fase {
+  id integer [primary key]
+  fase_id integer [not null, unique, ref: - fase_prueba.id]
+  volumen_escape_m3 decimal(10,4)
+  masa_co2_g decimal(12,3)
+  masa_co_g decimal(12,3)
+  masa_pm_g decimal(12,6)
+  emision_co2_g_l decimal(10,4)
+  emision_co_g_l decimal(10,4)
+  emision_pm_g_l decimal(10,6)
+  carbono_escape_g_m3 decimal(10,6)
+  combustible_estimado_g decimal(10,3)
+  balance_carbono decimal(8,4)
+  ef_co2_g_kg decimal(10,4)
+  ef_co_g_kg decimal(10,4)
+  ef_pm_g_kg decimal(10,4)
+
+  Note: 'Resultados calculados de emisiones por fase. carbono_escape_g_m3, combustible_estimado_g, balance_carbono y los factores de emisión (ef_*) solo aplican con metodo_calculo = 1 (balance de carbono). Las emision_*_g_l son masa emitida por litro de agua efectiva (en baja potencia, agua restante).'
+}
+
+Table resultado_prueba {
+  id integer [primary key]
+  prueba_wbt_id integer [not null, unique, ref: - prueba_wbt.id]
+
+  // Energía
+  eficiencia_alta_pct decimal(8,3)
+  consumo_especifico_baja_mj_min_l decimal(10,6)
+  relacion_reduccion decimal(8,3)
+  combustible_ref_5l_g decimal(10,3)
+  energia_ref_5l_kj decimal(12,3)
+
+  // Emisiones (vacías si la prueba no tiene mediciones)
+  co_alta_g_mj decimal(10,4)
+  pm_alta_mg_mj decimal(10,4)
+  co_baja_g_min_l decimal(10,6)
+  pm_baja_mg_min_l decimal(10,6)
+  co_interior_g_min decimal(10,6)
+  pm_interior_mg_min decimal(10,6)
+  co_ref_5l_g decimal(10,4)
+  pm_ref_5l_g decimal(10,4)
+
+  Note: 'Resultados que combinan varias fases de una misma prueba (métricas IWA). Los niveles (tiers) se calculan sobre el promedio de las pruebas válidas del conjunto.'
 }
