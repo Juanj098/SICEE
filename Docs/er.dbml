@@ -7,19 +7,19 @@ enum tipo_fase_enum {
 }
 
 Table investigador {
-    id integer [primary key]
+    id integer [primary key, increment]
     nombre varchar
 }
 
 Table laboratorio {
-    id integer [primary key]
+    id integer [primary key, increment]
     institucion varchar
     direccion varchar
     descripcion varchar
 }
 
 Table estufa {
-    id integer [primary key]
+    id integer [primary key, increment]
     marca varchar
     fabricante varchar
     area_camara_cm2 decimal(12,4)
@@ -30,7 +30,7 @@ Table estufa {
 }
 
 Table condiciones_ambientales {
-    id integer [primary key]
+    id integer [primary key, increment]
     temperatura_c decimal(6,2)
     humedad_relativa_pct decimal(5,2)
     altitud_m decimal(7,2)
@@ -41,9 +41,10 @@ Table condiciones_ambientales {
 }
 
 Table combustible {
-  id integer [primary key]
+  id integer [primary key, increment]
   tipo varchar [not null]
-  tamanio_cm decimal(8,2)
+  longitud_combustible_cm decimal(8,2)
+  ancho_combustible_cm decimal(8,2)
   humedad_pct decimal(5,2)
   poder_calorifico_neto_mj_kg decimal(8,3)
   poder_calorifico_bruto_mj_kg decimal(8,3)
@@ -55,11 +56,11 @@ Table combustible {
 }
 
 Table fase_prueba {
-  id integer [primary key]
+  id integer [primary key, increment]
   prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
   tipo_fase tipo_fase_enum [not null]
-  t_inicial datetime(3)
-  t_final datetime(3)
+  t_inicial timestamp(3)
+  t_final timestamp(3)
   peso_combustible_inicial_kg decimal(8,4)
   peso_combustible_final_kg decimal(8,4)
   peso_carbon_con_recipiente_kg decimal(8,4)
@@ -72,7 +73,7 @@ Table fase_prueba {
 }
 
 Table olla {
-  id integer [primary key]
+  id integer [primary key, increment]
   prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
   numero_olla integer [not null]
   peso_seco_kg decimal(8,4)
@@ -84,7 +85,7 @@ Table olla {
 }
 
 Table olla_fase {
-  id integer [primary key]
+  id integer [primary key, increment]
   olla_id integer [not null, ref: > olla.id]
   fase_id integer [not null, ref: > fase_prueba.id]
   temperatura_inicial_agua_c decimal(5,2)
@@ -100,15 +101,15 @@ Table olla_fase {
 }
 
 Table conjunto_pruebas {
-  id integer [primary key]
+  id integer [primary key, increment]
   estufa_id integer [not null, ref: > estufa.id]
   descripcion varchar(500)
 }
 
 Table prueba_wbt {
-  id integer [primary key]
+  id integer [primary key, increment]
   uuid uuid [not null, unique, default: `gen_random_uuid()`]
-  fecha datetime [not null]
+  fecha timestamp [not null]
   investigador_id integer [not null, ref: > investigador.id]
   laboratorio_id integer [not null, ref: > laboratorio.id]
   combustible_id integer [not null, ref: > combustible.id]
@@ -120,8 +121,8 @@ Table prueba_wbt {
   motivo_invalidez varchar(500)
   version_protocolo varchar(10) [not null, default: '4.2.3']
   observaciones varchar
-  created_at datetime [not null, default: `now()`]
-  updated_at datetime [not null, default: `now()`]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
 
   indexes {
     (conjunto_pruebas_id, numero_repeticion) [unique]
@@ -129,7 +130,7 @@ Table prueba_wbt {
 }
 
 Table resultado_fase {
-  id integer [primary key]
+  id integer [primary key, increment]
   fase_id integer [not null, unique, ref: - fase_prueba.id]
   tiempo_fase_min decimal(8,2)
   masa_agua_inicial_kg decimal(8,4)
@@ -154,7 +155,7 @@ Table resultado_fase {
 }
 
 Table mediciones_opcionales {
-  id integer [primary key]
+  id integer [primary key, increment]
   fase_id integer [not null, unique, ref: - fase_prueba.id]
   temperatura_ducto_c decimal(7,2)
   co_ppm decimal(10,3)
@@ -172,7 +173,7 @@ Table mediciones_opcionales {
 }
 
 Table emisiones_prueba {
-  id integer [primary key]
+  id integer [primary key, increment]
   prueba_wbt_id integer [not null, unique, ref: - prueba_wbt.id]
   caudal_campana_m3_h decimal(10,3)
   metodo_captura varchar
@@ -184,7 +185,7 @@ Table emisiones_prueba {
 }
 
 Table resultado_emisiones_fase {
-  id integer [primary key]
+  id integer [primary key, increment]
   fase_id integer [not null, unique, ref: - fase_prueba.id]
   volumen_escape_m3 decimal(10,4)
   masa_co2_g decimal(12,3)
