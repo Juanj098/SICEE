@@ -103,9 +103,17 @@ def Velocidad_combustion(peso_combustible_i_kg, peso_combustible_f_kg, tiempo_in
     tiempo_fase = Tiempo_fase_min(tiempo_inicial, tiempo_final)
     return combustible_consumido_g / tiempo_fase
 
-def Potencia_fuego_kw (m_combustible_i, m_combustible_f, humedad_combustible, pci, tiempo_inicial, tiempo_final):
+def Potencia_fuego_kw (
+        m_combustible_i, 
+        m_combustible_f, 
+        humedad_combustible, 
+        pci, # Poder_calorifico_neto 
+        tiempo_inicial, 
+        tiempo_final):
     combustible_seco_kg = m_combustible_seco(m_combustible_i, m_combustible_f, humedad_combustible)
     energia_kj = (combustible_seco_kg*pci)*1000
     tiempo_fase_s = Tiempo_fase_min(tiempo_inicial, tiempo_final)*60
 
     return energia_kj / tiempo_fase_s
+
+
