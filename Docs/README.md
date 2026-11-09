@@ -1,4 +1,4 @@
-# SICEE - Sistema INtegrado de Caracterizacion Energetica y Emisiones
+# SICEE - Sistema Integrado de Caracterizacion Energetica y Emisiones
 
 ## Analisis del negocio
 

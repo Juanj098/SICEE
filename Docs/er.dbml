@@ -43,7 +43,8 @@ Table condiciones_ambientales {
 Table combustible {
   id integer [primary key, increment]
   tipo varchar [not null]
-  tamanio_cm decimal(8,2)
+  longitud_combustible_cm decimal(8,2)
+  ancho_combustible_cm decimal(8,2)
   humedad_pct decimal(5,2)
   poder_calorifico_neto_mj_kg decimal(8,3)
   poder_calorifico_bruto_mj_kg decimal(8,3)
