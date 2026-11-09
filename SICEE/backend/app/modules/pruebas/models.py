@@ -13,12 +13,11 @@ class Cond_Ambientales(db.Model):
     humedad_relativa_pct = db.Column(db.Numeric(5, 2))
     presion_atmosferica_kpa = db.Column(db.Numeric(7, 3))
     viento_ms = db.Column(db.Numeric(5, 2))
+    condicion_viento = db.Column(db.String(100))
     punto_ebullicion_c = db.Column(db.Numeric(5, 2))
+    altitud_m = db.Column(db.Numeric(7,2))
 
-    pruebas_wbt = db.relationship(
-        "PruebaWBT",
-        back_populates="cond_ambientales",
-    )
+    pruebas_wbt = db.relationship("PruebaWBT", back_populates="cond_ambientales")
 
 
 # prueba_wbt
@@ -48,8 +47,11 @@ class PruebaWBT(db.Model):
     combustible = db.relationship("Combustibles", back_populates="pruebas_wbt")
     cond_ambientales = db.relationship("Cond_Ambientales", back_populates="pruebas_wbt")
     conjuntoPruebas = db.relationship("ConjuntoPruebas", back_populates="prueba")
+    olla = db.relationship("Olla", back_populates="prueba_wbt")
 
     fase_prueba = db.relationship("FasePrueba", back_populates="prueba", cascade="all, delete-orphan")
+
+    __table_args__= (db.UniqueConstraint("conjunto_pruebas_id", "numero_repeticion", name = "Uq_conjunto_pruebas_numero"))
 
 # fase_prueba
 class FasePrueba(db.Model):
@@ -98,8 +100,36 @@ class ConjuntoPruebas(db.Model):
     __tablename__='conjunto_pruebas'
 
     id = db.Column(db.Integer, primary_key=True)
-    estufa_id = db.Column(db.Integer, db.ForeignKey('estufa.id'), nullable=False)
+    estufa_id = db.Column(db.Integer, db.ForeignKey('estufa.id', ondelete='CASCADE'), nullable=False)
     descripcion = db.Column(db.String(500))
 
     estufa = db.relationship("Estufas", back_populates='conjuntoPrueba')
     prueba = db.relationship("PruebaWBT", back_populates="conjuntoPruebas")
+
+# olla
+class Olla(db.Model):
+    __tablename__='olla'
+
+    id = db.Column(db.Integer, primary_key=True)
+    prueba_wbt_id = db.Column(db.Integer, db.ForeignKey("prueba_wbt.id", ondelete='CASCADE'), nullable=False)
+    numero_olla = db.Column(db.Integer)
+    peso_seco_kg = db.Column(db.Numeric(8,4))
+    capacidad_l = db.Column(db.Numeric(5,2))
+
+    prueba_wbt = db.relationship("PruebaWBT", back_populates="olla")
+    olla_fase = db.relationship("OllaFase", back_populates="olla")
+
+class OllaFase(db.Model):
+    __tablename__='olla_fase'
+
+    id = db.Column(db.Integer, primary_key=True)
+    olla_id = db.Column(db.Integer, db.ForeignKey("olla.id", ondelete='CASCADE'), nullable=False)
+    fase_id = db.Column(db.Integer, db.ForeignKey("fase_prueba.id", ondelete='CASCADE'), nullable=False)
+    temperatura_inicial_agua_c = db.Column(db.Numeric(5,2))
+    temperatura_final_agua_c = db.Column(db.Numeric(5,2))
+    peso_con_agua_inicial_kg = db.Column(db.Numeric(8,4))
+    peso_con_agua_final_kg = db.Column(db.Numeric(8,4))
+
+    olla = db.relationship("Olla", back_populates="olla_fase")
+
+    __table_args__ = (db.UniqueConstraint("olla_id", "fase_id", name="uq_olla_fase_olla_fase"))
