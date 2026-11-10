@@ -142,12 +142,12 @@ VALUES
      1.765, 276.735, 0.2576, 0.0200, 48.490);
 
 INSERT INTO mediciones_opcionales
-    (fase_id, co_ppm, pm_mg_m3, co2_ppm, temperatura_ducto_c,
-     presion_atmosferica_kpa)
+    (fase_id, temperatura_ducto_c, co_ppm, pm_ug_m3, co2_ppm,
+     co2_fondo_ppm, co_fondo_ppm, pm_fondo_ug_m3)
 VALUES
-    (1, 120.500, 3.200, 45000.000, 85.30, 101.325),
-    (2, 110.000, 2.800, 43000.000, 88.10, 101.325),
-    (3, 95.000, 2.100, 41000.000, 90.50, 101.325);
+    (1, 85.30, 120.500, 3200.000, 45000.000, 420.000, 0.500, 5.000),
+    (2, 88.10, 110.000, 2800.000, 43000.000, 420.000, 0.500, 5.000),
+    (3, 90.50, 95.000, 2100.000, 41000.000, 420.000, 0.500, 5.000);
 
 -- ------------------------------------------------------------
 -- Prueba 2: registrada, sin cálculos todavía
@@ -184,8 +184,8 @@ VALUES
     (3, 5, 90.00, 98.00, 5.9000, 5.1000);
 
 INSERT INTO mediciones_opcionales
-    (fase_id, co_ppm, pm_mg_m3, co2_ppm, temperatura_ducto_c,
-     presion_atmosferica_kpa)
+    (fase_id, temperatura_ducto_c, co_ppm, pm_ug_m3, co2_ppm,
+     co2_fondo_ppm, co_fondo_ppm, pm_fondo_ug_m3)
 VALUES
-    (4, 130.000, 3.500, 46000.000, 84.00, 101.100),
-    (5, 115.000, 3.000, 44000.000, 86.50, 101.100);
+    (4, 84.00, 130.000, 3500.000, 46000.000, 420.000, 0.500, 5.000),
+    (5, 86.50, 115.000, 3000.000, 44000.000, 420.000, 0.500, 5.000);

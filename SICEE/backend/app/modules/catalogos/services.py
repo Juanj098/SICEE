@@ -9,23 +9,29 @@ def listar_combustible():
 
 def crear_combustible(
     tipo,
-    tamanio_cm,
-    peso_kg,
+    longitud_combustible_cm,
+    ancho_combustible_cm,
     humedad_pct,
     poder_calorifico_neto_mj_kg,
     poder_calorifico_bruto_mj_kg,
+    poder_calorifico_carbon_mj_kg,
     tipo_alimentacion,
     contenido_carbono_pct,
+    contenido_carbono_carbon_pct,
+    descripcion
 ):
     combustible = Combustibles(
         tipo=tipo,
-        tamanio_cm=tamanio_cm,
-        peso_kg=peso_kg,
+        longitud_combustible_cm=longitud_combustible_cm,
+        ancho_combustible_cm=ancho_combustible_cm,
         humedad_pct=humedad_pct,
         poder_calorifico_neto_mj_kg=poder_calorifico_neto_mj_kg,
         poder_calorifico_bruto_mj_kg=poder_calorifico_bruto_mj_kg,
+        poder_calorifico_carbon_mj_kg=poder_calorifico_carbon_mj_kg,
         tipo_alimentacion=tipo_alimentacion,
         contenido_carbono_pct=contenido_carbono_pct,
+        contenido_carbono_carbon_pct=contenido_carbono_carbon_pct,
+        descripcion=descripcion
     )
     db.session.add(combustible)
     db.session.commit()
@@ -37,12 +43,13 @@ def listar_estufas():
     return Estufas.query.all()
 
 
-def newEstufa(marca, fabricante, area_camara_cm2, altura_cm, material, descripcion):
+def newEstufa(marca, fabricante, area_camara_cm2, altura_cm, numero_hornillas, material, descripcion):
     estufa = Estufas(
         marca=marca,
         fabricante=fabricante,
         area_camara_cm2=area_camara_cm2,
         altura_cm=altura_cm,
+        numero_hornillas=numero_hornillas,
         material=material,
         descripcion=descripcion,
     )
