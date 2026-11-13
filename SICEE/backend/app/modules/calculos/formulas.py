@@ -192,7 +192,9 @@ def energia_especifica_corregida_kj_l(consumo_especifico_corregido_g_l, poder_ca
 
 # Función 16  |  Ec. (25)
 def velocidad_combustion_g_min(combustible_seco_eq_kg, t_inicio, t_final):
-    delta_t = _f(t_final) - _f(t_inicio)
+    delta_t = tiempo_fase_min(t_inicio, t_final)
+    if not delta_t:
+        return None
     r = (1000 * combustible_seco_eq_kg) / delta_t
     return r
 
@@ -200,7 +202,9 @@ def velocidad_combustion_g_min(combustible_seco_eq_kg, t_inicio, t_final):
 # Función 17  |  Ec. (26)
 def potencia_fase_kw(combustible_seco_equivalente_kg, poder_calorifico_neto_mj_kg, t_inicial, t_final):
     q_comb = combustible_seco_equivalente_kg * poder_calorifico_neto_mj_kg
-    delta_t = _f(t_final) - _f(t_inicial)
+    delta_t = tiempo_fase_min(t_inicial, t_final)
+    if not delta_t:
+        return None
     fp = q_comb / (60 * delta_t)
     return fp
 
@@ -228,13 +232,13 @@ def consumo_especifico_corregido_g_l(ollas_fase, tipo_fase, pto_ebullicion_c, co
         return None
 
     olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1), None)
-    if not olla_1 or olla_1.get('temperatura_inicial_agua_c'):
+    if not olla_1 or olla_1.get('temperatura_inicial_agua_c') is None:
         return None
     
     t_ini = _f(olla_1['temperatura_inicial_agua_c'])
     delta_t = _f(pto_ebullicion_c) - t_ini
     if delta_t <= 0:
-        return ValueError('pto_ebullicion debe ser mayor que la temperatura inicial')
+        raise ValueError('pto_ebullicion debe ser mayor que la temperatura inicial')
     
     sc_corr = consumo_especifico_g_l * (DELTA_T_REF_C/delta_t)
     return sc_corr
