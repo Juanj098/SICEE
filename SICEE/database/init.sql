@@ -50,7 +50,7 @@ CREATE TABLE condiciones_ambientales (
     altitud_m                DECIMAL(7,2),
     presion_atmosferica_kpa  DECIMAL(7,3),
     viento_ms                DECIMAL(5,2),
-    condicion_viento         VARCHAR(50),
+    condicion_viento         VARCHAR(500),
     punto_ebullicion_c       DECIMAL(6,2)
 );
 
@@ -179,11 +179,16 @@ COMMENT ON TABLE resultado_fase IS
 CREATE TABLE mediciones_opcionales (
     id                       INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fase_id                  INTEGER NOT NULL UNIQUE REFERENCES fase_prueba(id) ON DELETE CASCADE,
-    co_ppm                   DECIMAL(10,3),
-    pm_mg_m3                 DECIMAL(10,3),
-    co2_ppm                  DECIMAL(10,3),
     temperatura_ducto_c      DECIMAL(7,2),
-    presion_atmosferica_kpa  DECIMAL(7,3)
+    co_ppm                   DECIMAL(10,3),
+    pm_ug_m3                 DECIMAL(10,3),
+    co2_ppm                  DECIMAL(10,3),
+    co2_fondo_ppm            DECIMAL(10,3),
+    co_fondo_ppm             DECIMAL(10,3),
+    pm_fondo_ug_m3           DECIMAL(10,3),
+    co2_total_g              DECIMAL(12,3),
+    co_total_g               DECIMAL(12,3),
+    pm_total_g               DECIMAL(12,6)
 );
 
 -- ------------------------------------------------------------

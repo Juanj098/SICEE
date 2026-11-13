@@ -130,20 +130,20 @@ Table prueba_wbt {
 }
 
 Table resultado_fase {
-  id integer [primary key, increment]
-  fase_id integer [not null, unique, ref: - fase_prueba.id]
-  tiempo_fase_min decimal(8,2)
+  id integer [primary key, increment] 
+  fase_id integer [not null, unique, ref: - fase_prueba.id] 
+  tiempo_fase_min decimal(8,2) 
   masa_agua_inicial_kg decimal(8,4)
-  masa_agua_final_kg decimal(8,4)
-  masa_agua_evaporada_kg decimal(6,4)
-  masa_agua_efectiva_kg decimal(6,4)
-  combustible_consumido_kg decimal(6,4)
-  tiempo_ebullicion_min decimal(8,3)
-  tiempo_ebullicion_corregido_min decimal(8,3)
-  energia_util_kj decimal(8,3)
-  energia_combustible_kj decimal(8,3)
-  eficiencia_termica_pct decimal(8,3)
-  consumo_especifico_g_l decimal(8,3)
+  masa_agua_final_kg decimal(8,4) 
+  masa_agua_evaporada_kg decimal(6,4) 
+  masa_agua_efectiva_kg decimal(6,4) 
+  combustible_consumido_kg decimal(6,4) 
+  tiempo_ebullicion_min decimal(8,3) 
+  tiempo_ebullicion_corregido_min decimal(8,3) 
+  energia_util_kj decimal(8,3) 
+  energia_combustible_kj decimal(8,3) 
+  eficiencia_termica_pct decimal(8,3) 
+  consumo_especifico_g_l decimal(8,3) 
   velocidad_combustion_g_min decimal(8,3)
   potencia_fase_kw decimal(8,3)
   energia_especifica_corregida_kj_l decimal(8,3)
