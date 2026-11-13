@@ -3,6 +3,7 @@ from . import bp, services
 
 @bp.get('/datos/<int:prueba_id>')
 def list_datos(prueba_id):
+    """Devuelve la prueba con sus fases, ollas, mediciones y catálogos."""
     datos = services.get_datos(prueba_id)
     if datos is None:
         return {'error': f'No existe la prueba_wbt con id {prueba_id}'}, 404
