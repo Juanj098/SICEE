@@ -6,6 +6,11 @@ H_VAPORIZACION_COMBUSTIBLE_KJ_KG = 2257
 T_REF_BAJA_C = 25
 DELTA_T_REF_C = 75
 
+TIPOS_FASE = {
+    'inicio_frio',
+    'inicio_caliente',
+    'baja_potencia'
+}
 
 # /--- Utilidades ---/
 # Función 1
@@ -192,15 +197,24 @@ def energia_especifica_corregida_kj_l(consumo_especifico_corregido_g_l, poder_ca
 
 # Función 16  |  Ec. (25)
 def velocidad_combustion_g_min(combustible_seco_eq_kg, t_inicio, t_final):
-    delta_t = _f(t_final) - _f(t_inicio)
+    delta_t = tiempo_fase_min(t_inicio, t_final)
+    if not delta_t:
+        return None
     r = (1000 * combustible_seco_eq_kg) / delta_t
     return r
 
 
 # Función 17  |  Ec. (26)
-def potencia_fase_kw(combustible_seco_equivalente_kg, poder_calorifico_neto_mj_kg, t_inicial, t_final):
-    q_comb = combustible_seco_equivalente_kg * poder_calorifico_neto_mj_kg
-    delta_t = _f(t_final) - _f(t_inicial)
+def potencia_fase_kw(
+        combustible_seco_equivalente_kg, 
+        poder_calorifico_neto_mj_kg, 
+        t_inicial, 
+        t_final
+    ):
+    q_comb = energia_combustible_kj(combustible_seco_equivalente_kg, poder_calorifico_neto_mj_kg)
+    delta_t = tiempo_fase_min(t_inicial, t_final)
+    if not delta_t:
+        return None
     fp = q_comb / (60 * delta_t)
     return fp
 
@@ -228,62 +242,145 @@ def consumo_especifico_corregido_g_l(ollas_fase, tipo_fase, pto_ebullicion_c, co
         return None
 
     olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1), None)
-    if not olla_1 or olla_1.get('temperatura_inicial_agua_c'):
+    if not olla_1 or olla_1.get('temperatura_inicial_agua_c') is None:
         return None
     
     t_ini = _f(olla_1['temperatura_inicial_agua_c'])
     delta_t = _f(pto_ebullicion_c) - t_ini
     if delta_t <= 0:
-        return ValueError('pto_ebullicion debe ser mayor que la temperatura inicial')
+        raise ValueError('pto_ebullicion debe ser mayor que la temperatura inicial')
     
     sc_corr = consumo_especifico_g_l * (DELTA_T_REF_C/delta_t)
     return sc_corr
 
 
+# Funcion 20 | Ec. (7)
+def tiempo_ebullicion_corregido_min(t_ini, t_fin, pto_ebullicion_c, ollas_fase, tipo_fase):
+    if tipo_fase == 'baja_potencia':
+        return None
+    delta_t = tiempo_fase_min(t_ini, t_fin)
+    if delta_t is None:
+        return None
+    t_eb = _f(pto_ebullicion_c)
+    olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1), None)
+    if olla_1 is None or olla_1.get('temperatura_inicial_agua_c') is None:
+        return None
+    t_ini_1 = _f(olla_1['temperatura_inicial_agua_c'])
+    delta_eb = t_eb - t_ini_1
+    if delta_eb <= 0:
+        raise ValueError('pto_ebullicion debe ser mayor a temperatura inicial de la olla 1')
+    delta_t_corr = delta_t * (DELTA_T_REF_C/delta_eb)
+    return delta_t_corr
+
+
 # /--- Resultado completo de una fase (columnas de resultado_fase) ---/
-# Función 20
-def calcular_resultado_fase(fase, ollas_fase, humedad_pct, poder_calorifico_neto_mj_kg, punto_ebullicion_c):
-    """
-    fase: dict con columnas de fase_prueba.
-    ollas_fase: lista de dicts con peso_seco_kg (de olla) + columnas de olla_fase.
-    Las masas y energías de agua se suman sobre todas las ollas.
-    """
-    masa_inicial = masa_final = evaporada = efectiva = energia_util = 0.0
+# Función 21
+def calcular_resultado_fase(
+        fase, 
+        ollas_fase, 
+        humedad_pct,
+        combustible,
+        condiciones_ambientales,
+        peso_recipiente_carbon_kg,
+        cambio_carbon_frio_kg = None
+    ):
 
-    for olla in ollas_fase:
-        m_i = masa_agua_kg(olla["peso_con_agua_inicial_kg"], olla["peso_seco_kg"])
-        m_f = masa_agua_kg(olla["peso_con_agua_final_kg"], olla["peso_seco_kg"])
-        t_i = _f(olla["temperatura_inicial_agua_c"])
-        t_f = _f(olla["temperatura_final_agua_c"])
+    tipo_fase = fase['tipo_fase']
+    if tipo_fase not in TIPOS_FASE:
+        raise ValueError(f'tipo_fase invalido: {tipo_fase!r}. Debe ser {TIPOS_FASE}')
 
-        masa_inicial += m_i
-        masa_final += m_f
-        evaporada += masa_agua_evaporada_kg(m_i, m_f)
-        efectiva += masa_agua_efectiva_kg(m_i, m_f, t_i, t_f, punto_ebullicion_c, fase["tipo_fase"])
-        energia_util += energia_util_kj(m_i, m_f, t_i, t_f)
+    pto_eb = condiciones_ambientales['punto_ebullicion_c']
+    t_aire = condiciones_ambientales['temperatura_c']
+    pcn_mj_kg = combustible['poder_calorifico_neto_mj_kg']
+
+    masa_inicial = sum(
+        masa_agua_kg(o['peso_con_agua_inicial_kg'], o['peso_seco_kg'])
+        for o in ollas_fase if o.get('peso_con_agua_inicial_kg') is not None
+    )
+
+    masa_final = sum(
+        masa_agua_kg(o['peso_con_agua_final_kg'], o['peso_seco_kg'])
+        for o in ollas_fase if o.get('peso_con_agua_final_kg') is not None
+    )
+
+    evaporada = masa_agua_evaporada_kg(ollas_fase)
+    efectiva = masa_agua_efectiva_kg(ollas_fase,pto_eb, tipo_fase)
+
+    t_min = tiempo_fase_min(fase['t_inicial'],fase['t_final'])
+    t_corr_min = tiempo_ebullicion_corregido_min(fase['t_inicial'], fase['t_final'], pto_eb, ollas_fase, tipo_fase)
+    f_cons = combustible_consumido_kg(fase['peso_combustible_inicial_kg'],fase['peso_combustible_final_kg'])
+
+    delta_carbon = cambio_carbon_kg(
+        tipo_fase, 
+        fase.get('peso_carbon_con_recipiente_kg'),
+        peso_recipiente_carbon_kg,
+        cambio_carbon_frio_kg
+    )
 
     seco_eq = combustible_seco_equivalente_kg(
-        fase["peso_combustible_inicial_kg"], fase["peso_combustible_final_kg"], humedad_pct)
-    energia_comb = energia_combustible_kj(seco_eq, poder_calorifico_neto_mj_kg)
-    consumo_corr = consumo_especifico_corregido_g_l(seco_eq, efectiva)
+        fase['peso_combustible_inicial_kg'],
+        fase['peso_combustible_final_kg'],
+        combustible['humedad_pct'],
+        pcn_mj_kg,
+        combustible['poder_calorifico_carbon_mj_kg'],
+        peso_recipiente_carbon_kg,
+        fase.get('peso_carbon_con_recipiente_kg'),
+        t_aire,
+        pto_eb,
+        tipo_fase,
+        cambio_carbon_frio_kg
+    )
+
+    q_util = energia_util_kj(
+        ollas_fase,
+        pto_eb,
+        tipo_fase
+    )
+
+    q_combustible = energia_combustible_kj(seco_eq, pcn_mj_kg)
+    ef_termica = eficiencia_termica_pct(q_util, q_combustible)
+    sc = consumo_especifico_g_l(seco_eq, efectiva)
+    sc_corr = consumo_especifico_corregido_g_l(
+        ollas_fase, 
+        tipo_fase, 
+        pto_eb, 
+        sc
+    )
+
+    consumo_para_energia = sc if tipo_fase == 'baja_potencia' else sc_corr
+
+    v_comb = velocidad_combustion_g_min(
+        seco_eq, 
+        fase['t_inicial'],
+        fase['t_final']
+    )
+
+    p_fase = potencia_fase_kw(
+        seco_eq, 
+        pcn_mj_kg, 
+        fase['t_incial'], 
+        fase['t_final']
+    )
 
     return {
-        "tiempo_fase_min": tiempo_fase_min(fase["t_inicial"], fase["t_final"]),
-        "masa_agua_inicial_kg": masa_inicial,
-        "masa_agua_final_kg": masa_final,
-        "masa_agua_evaporada_kg": evaporada,
-        "masa_agua_efectiva_kg": efectiva,
-        "combustible_consumido_kg": combustible_consumido_kg(fase["peso_combustible_inicial_kg"], fase["peso_combustible_final_kg"]),
-        "combustible_seco_equivalente_kg": seco_eq,
-        "energia_util_kj": energia_util,
-        "energia_combustible_kj": energia_comb,
-        "eficiencia_termica_pct": eficiencia_termica_pct(energia_util, energia_comb),
-        "consumo_especifico_corregido_g_l": consumo_corr,
-        "energia_especifica_corregida_kj_l": (energia_especifica_corregida_kj_l(consumo_corr, poder_calorifico_neto_mj_kg)
-            if consumo_corr is not None else None),
-        "velocidad_combustion_g_min": velocidad_combustion_g_min(
-            fase["peso_combustible_inicial_kg"], 
-            fase["peso_combustible_final_kg"],
-            fase["t_inicial"], fase["t_final"]),
-        "potencia_fase_kw": potencia_fase_kw(seco_eq, poder_calorifico_neto_mj_kg, fase["t_inicial"], fase["t_final"]),
+        'tiempo_fase_min': t_min,
+        'tiempo_ebullicion_corregido_min': t_corr_min,
+        'masa_agua_inicial_kg': masa_inicial,
+        'masa_agua_final_kg': masa_final,
+        'masa_agua_evaporada_kg': evaporada,
+        'masa_agua_efectiva_kg': efectiva,
+        'combustible_consumido_kg': f_cons,
+        'cambio_carbon_kg': delta_carbon,
+        'combustible_seco_equivalente_kg': seco_eq,
+        'energia_util_kj': q_util,
+        'energia_combustible_kj': q_combustible,
+        'eficiencia_termica_pct': ef_termica,
+        'consumo_especifico_g_l': sc,
+        'consumo_especifico_corregido_g_l':sc_corr,
+        'energia_especifica_corregida_kj_l':(
+            energia_especifica_corregida_kj_l(consumo_para_energia,pcn_mj_kg)
+            if consumo_para_energia is not None else None
+        ),
+        'velocidad_combustion_g_min': v_comb,
+        'potencia_fase_kw': p_fase
     }
