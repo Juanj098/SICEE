@@ -90,10 +90,10 @@ INSERT INTO fase_prueba
      peso_combustible_inicial_kg, peso_combustible_final_kg,
      peso_carbon_con_recipiente_kg, peso_cenizas_kg, observaciones)
 VALUES
-    (1, 'inicio_frio', '2026-11-02 08:00:00', '2026-11-02 08:38:00',
-     1.2000, 0.5500, 0.2000, 0.0500, 'Fase de inicio frío'),
-    (1, 'inicio_caliente', '2026-11-02 08:45:00', '2026-11-02 09:23:00',
-     1.2000, 0.6000, 0.1900, 0.0400, 'Fase de inicio caliente'),
+    (1, 'inicio_frio', '2026-11-02 08:00:00', '2026-11-02 08:30:00',
+     1.2000, 0.5500, 0.2000, 0.0500, 'Fase de inicio frío, termina cuando hierve la olla 1'),
+    (1, 'inicio_caliente', '2026-11-02 08:45:00', '2026-11-02 08:53:00',
+     1.2000, 0.6000, 0.1900, 0.0400, 'Fase de inicio caliente, termina cuando hierve la olla 1'),
     (1, 'baja_potencia', '2026-11-02 09:30:00', '2026-11-02 10:15:00',
      0.7000, 0.4200, 0.1700, 0.0300, 'Fase de baja potencia, 45 min');
 
@@ -128,18 +128,18 @@ INSERT INTO resultado_fase
      combustible_seco_equivalente_kg, cambio_carbon_kg,
      consumo_especifico_corregido_g_l)
 VALUES
-    (1, 38.00, 8.0000, 6.9000, 1.1000, 8.0000,
-     0.6500, 30.00, 30.405, 4793.742,
-     11063.000, 43.330, 74.750, 17.105,
-     4.852, 599.218, 0.5980, 0.0500, 68.500),
-    (2, 38.00, 8.0000, 7.1000, 0.9000, 8.0000,
-     0.6000, 8.00, 100.000, 2223.626,
-     10212.000, 21.770, 69.000, 15.789,
-     4.479, 277.953, 0.5520, 0.0400, 64.000),
+    (1, 30.00, 8.0000, 6.9000, 1.1000, 6.9000,
+     0.6500, 30.00, 30.405, 4964.112,
+     9503.331, 52.235, 74.448, 17.123,
+     5.280, 1395.906, 0.5137, 0.0500, 75.454),
+    (2, 8.00, 8.0000, 7.1000, 0.9000, 7.1000,
+     0.6000, 8.00, 100.000, 2234.928,
+     8947.690, 24.978, 68.121, 60.457,
+     18.641, 15752.976, 0.4837, 0.0400, 851.512),
     (3, 45.00, 5.5000, 4.9000, 0.6000, 4.9000,
      0.2800, NULL, NULL, 1356.000,
-     4765.600, 28.450, 52.571, 6.222,
-     1.765, 276.735, 0.2576, 0.0200, 48.490);
+     5562.589, 24.377, 61.363, 6.682,
+     2.060, 1135.222, 0.3007, -0.0300, NULL);
 
 INSERT INTO mediciones_opcionales
     (fase_id, temperatura_ducto_c, co_ppm, pm_ug_m3, co2_ppm,
@@ -166,10 +166,10 @@ INSERT INTO fase_prueba
      peso_combustible_inicial_kg, peso_combustible_final_kg,
      peso_carbon_con_recipiente_kg, peso_cenizas_kg, observaciones)
 VALUES
-    (2, 'inicio_frio', '2026-11-03 08:00:00', '2026-11-03 08:40:00',
-     1.1500, 0.5200, 0.1800, 0.0400, 'Fase de inicio frío'),
-    (2, 'inicio_caliente', '2026-11-03 08:50:00', '2026-11-03 09:30:00',
-     1.1000, 0.5500, 0.1700, 0.0300, 'Fase de inicio caliente');
+    (2, 'inicio_frio', '2026-11-03 08:00:00', '2026-11-03 08:32:00',
+     1.1500, 0.5200, 0.1800, 0.0400, 'Fase de inicio frío, termina cuando hierve la olla 1'),
+    (2, 'inicio_caliente', '2026-11-03 08:50:00', '2026-11-03 09:00:00',
+     1.1000, 0.5500, 0.1700, 0.0300, 'Fase de inicio caliente, termina cuando hierve la olla 1');
 
 INSERT INTO olla
     (prueba_wbt_id, numero_olla, peso_seco_kg, capacidad_l)

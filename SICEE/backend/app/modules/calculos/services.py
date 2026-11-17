@@ -14,7 +14,6 @@ from .models import resultado_fase
 
 
 def _num(valor):
-    """Convierte Decimal a float para que el JSON sea numérico."""
     return float(valor) if valor is not None else None
 
 

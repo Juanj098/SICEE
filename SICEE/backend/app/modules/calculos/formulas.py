@@ -12,6 +12,29 @@ TIPOS_FASE = {
     'baja_potencia'
 }
 
+CAMPOS_OLLA = (
+    'peso_con_agua_inicial_kg',
+    'peso_con_agua_final_kg',
+    'temperatura_inicial_agua_c',
+    'temperatura_final_agua_c'
+)
+
+def _ollas_con_datos(ollas_fase):
+    validas = []
+    for ollas in ollas_fase:
+        n_olla = ollas.get('numero_olla')
+        faltan = [campo for campo in CAMPOS_OLLA if ollas.get(campo) is None]
+        if len(faltan) == len(CAMPOS_OLLA):
+            continue
+        if faltan:
+            raise ValueError(f'Olla {n_olla} con datos incompletos: faltan {faltan}')
+        if ollas.get('peso_seco_kg') is None:
+            raise ValueError(f'Olla {n_olla} sin peso_seco_kg')
+        validas.append(ollas)
+    if not validas:
+        raise ValueError('La fase no tiene ninguna olla con datos')
+    return validas
+
 # /--- Utilidades ---/
 # Función 1
 def _f(valor):
@@ -23,7 +46,14 @@ def _f(valor):
 def _a_datetime(valor):
     return datetime.fromisoformat(valor) if isinstance(valor, str) else valor
 
-
+# pcn / ec. 2
+def poder_calorifico_neto_mj_kg(neto, bruto):
+    if neto is not None:
+        return _f(neto)
+    if bruto is None:
+        raise ValueError('El combustible requiere poder calorifico neto o bruto')
+    return max(_f(bruto)-1.32, 0.0)
+    
 # /--- Tiempos ---/
 # Función 3  |  Ec. (6)
 def tiempo_fase_min(t_inicial, t_final):
@@ -52,8 +82,6 @@ def masa_agua_kg(peso_con_agua_kg, peso_seco_kg):
 def masa_agua_evaporada_kg(ollas_fase):
     total_kg = 0.0
     for olla in ollas_fase:
-        if olla.get('peso_con_agua_inicial_kg') is None or olla.get('peso_con_agua_final_kg') is None:
-            continue
         total_kg += (_f(olla['peso_con_agua_inicial_kg']) - _f(olla['peso_con_agua_final_kg']))
     return total_kg
 
@@ -68,14 +96,12 @@ def masa_agua_efectiva_kg(
     total_kg = 0.0
 
     for olla in ollas_fase:
-        if olla['peso_con_agua_final_kg'] is None:
-            continue
 
         agua_final_kg = masa_agua_kg(olla['peso_con_agua_final_kg'], olla['peso_seco_kg'])
         t_fin = _f(olla['temperatura_final_agua_c'])
 
         if tipo_fase == 'baja_potencia':
-            if olla['numero_olla'] == 1:
+            if olla.get('numero_olla') == 1:
                 total_kg += agua_final_kg
                 continue
             t_ref = T_REF_BAJA_C
@@ -102,9 +128,9 @@ def energia_sensible_kj(
     t_eb = _f(pto_ebullicion)
     # Baja_potencia
     if tipo_fase == 'baja_potencia':
-        olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1),None)
-        if not olla_1 or olla_1.get("peso_con_agua_inicial_kg") is None:
-            return 0.0                
+        olla_1 = next((o for o in ollas_fase if o.get('numero_olla') == 1),None)
+        if olla_1 is None:
+            raise ValueError('baja potencia requiere la olla 1')            
         
         a_ini_1 = masa_agua_kg(olla_1['peso_con_agua_inicial_kg'], olla_1['peso_seco_kg'])
         a_rest = masa_agua_efectiva_kg(ollas_fase,t_eb,tipo_fase)
@@ -116,8 +142,7 @@ def energia_sensible_kj(
     # Inicio frio, Inicio caliente
     q_sens = 0.0
     for olla in ollas_fase:
-        if olla['peso_con_agua_inicial_kg'] is None:
-            continue
+
         a_ini = masa_agua_kg(olla['peso_con_agua_inicial_kg'], olla['peso_seco_kg'])
         delta_t = _f(olla['temperatura_final_agua_c'])-_f(olla['temperatura_inicial_agua_c'])
         q_sens += CP_AGUA_KJ_KG_C * a_ini * delta_t
@@ -228,6 +253,11 @@ def cambio_carbon_kg(
     ):
     if peso_carbon_con_recipiente_kg is None:
         return 0.0
+    if peso_recipiente_carbon_kg is None:
+        raise ValueError(
+            'falta peso_recipiente_carbon_kg: se pesó el carbón de la fase '
+            'pero no el recipiente vacío'
+        )
     delta = _f(peso_carbon_con_recipiente_kg) - _f(peso_recipiente_carbon_kg)
     if tipo_fase == 'baja_potencia':
         if cambio_carbon_frio_kg is None:
@@ -241,7 +271,7 @@ def consumo_especifico_corregido_g_l(ollas_fase, tipo_fase, pto_ebullicion_c, co
     if tipo_fase == 'baja_potencia' or consumo_especifico_g_l is None:
         return None
 
-    olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1), None)
+    olla_1 = next((o for o in ollas_fase if o.get('numero_olla') == 1), None)
     if not olla_1 or olla_1.get('temperatura_inicial_agua_c') is None:
         return None
     
@@ -262,7 +292,7 @@ def tiempo_ebullicion_corregido_min(t_ini, t_fin, pto_ebullicion_c, ollas_fase, 
     if delta_t is None:
         return None
     t_eb = _f(pto_ebullicion_c)
-    olla_1 = next((o for o in ollas_fase if o['numero_olla'] == 1), None)
+    olla_1 = next((o for o in ollas_fase if o.get('numero_olla') == 1), None)
     if olla_1 is None or olla_1.get('temperatura_inicial_agua_c') is None:
         return None
     t_ini_1 = _f(olla_1['temperatura_inicial_agua_c'])
@@ -278,7 +308,6 @@ def tiempo_ebullicion_corregido_min(t_ini, t_fin, pto_ebullicion_c, ollas_fase, 
 def calcular_resultado_fase(
         fase, 
         ollas_fase, 
-        humedad_pct,
         combustible,
         condiciones_ambientales,
         peso_recipiente_carbon_kg,
@@ -289,18 +318,22 @@ def calcular_resultado_fase(
     if tipo_fase not in TIPOS_FASE:
         raise ValueError(f'tipo_fase invalido: {tipo_fase!r}. Debe ser {TIPOS_FASE}')
 
+    ollas_fase = _ollas_con_datos(ollas_fase)
+    if not any(olla.get('numero_olla') == 1 for olla in ollas_fase):
+        raise ValueError('La fase requiere la olla 1')
+
     pto_eb = condiciones_ambientales['punto_ebullicion_c']
     t_aire = condiciones_ambientales['temperatura_c']
-    pcn_mj_kg = combustible['poder_calorifico_neto_mj_kg']
+    pcn_mj_kg = poder_calorifico_neto_mj_kg(combustible.get('poder_calorifico_neto_mj_kg'), combustible.get('poder_calorifico_bruto_mj_kg'))
 
     masa_inicial = sum(
         masa_agua_kg(o['peso_con_agua_inicial_kg'], o['peso_seco_kg'])
-        for o in ollas_fase if o.get('peso_con_agua_inicial_kg') is not None
+        for o in ollas_fase
     )
 
     masa_final = sum(
         masa_agua_kg(o['peso_con_agua_final_kg'], o['peso_seco_kg'])
-        for o in ollas_fase if o.get('peso_con_agua_final_kg') is not None
+        for o in ollas_fase
     )
 
     evaporada = masa_agua_evaporada_kg(ollas_fase)
@@ -358,12 +391,13 @@ def calcular_resultado_fase(
     p_fase = potencia_fase_kw(
         seco_eq, 
         pcn_mj_kg, 
-        fase['t_incial'], 
+        fase['t_inicial'], 
         fase['t_final']
     )
 
     return {
         'tiempo_fase_min': t_min,
+        'tiempo_ebullicion_min': (None if tipo_fase == 'baja_potencia' else t_min),
         'tiempo_ebullicion_corregido_min': t_corr_min,
         'masa_agua_inicial_kg': masa_inicial,
         'masa_agua_final_kg': masa_final,
