@@ -1,12 +1,27 @@
-* Investigador
+# DATOS
+
+* Prueba_wbt
+    ├── Fecha
+    ├── Investigador (selección)
+    ├── Laboratorio (selección)
+    ├── Combustible (selección)
+    ├── Condiciones_ambientales (selección)
+    ├── Conjunto_pruebas (selección)
+    ├── Peso_recipiente_carbon_kg
+    ├── Numero_repeticion
+    ├── Es_valida
+    ├── Motivo_invalidez
+    └── Observaciones
+
+* Investigador (informacion general)
     └── Nombre_investigador
 
-* Laboratorio
+* Laboratorio (informacion general)
     ├── Institucion
     ├── Direccion
     └── Descripcion
 
-* Estufa
+* Estufa (informacion general)
     ├── Marca
     ├── Fabricante
     ├── Area_camara_cm2
@@ -37,22 +52,10 @@
     ├── Contenido_carbono_pct
     └── Descripcion
 
-* Conjunto_pruebas
+* Conjunto_pruebas (informacion general)
     ├── Estufa (selección de una existente)
     └── Descripcion
 
-* Prueba_wbt
-    ├── Fecha
-    ├── Investigador (selección)
-    ├── Laboratorio (selección)
-    ├── Combustible (selección)
-    ├── Condiciones_ambientales (selección)
-    ├── Conjunto_pruebas (selección)
-    ├── Peso_recipiente_carbon_kg
-    ├── Numero_repeticion
-    ├── Es_valida
-    ├── Motivo_invalidez
-    └── Observaciones
 
 * Fase_prueba (una por cada fase: inicio frío, inicio caliente, baja potencia)
     ├── Tipo_fase
