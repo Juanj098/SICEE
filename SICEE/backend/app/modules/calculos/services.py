@@ -11,6 +11,7 @@ from app.modules.pruebas.models import (
     PruebaWBT,
 )
 from .models import resultado_fase
+from app.modules.calculos.formulas import calcular_resultado_fase
 
 
 def _num(valor):
@@ -21,12 +22,11 @@ def _fecha(valor):
     return valor.isoformat() if valor is not None else None
 
 
-def _masa_agua(peso_con_agua_kg, peso_seco_kg):
-    """Masa de agua de una olla: peso con agua menos peso seco."""
-    if peso_con_agua_kg is None or peso_seco_kg is None:
-        return None
-    return peso_con_agua_kg - peso_seco_kg
-
+def _redondear(resultado, decimales=2):
+    return {
+        k: round(v, decimales) if isinstance(v, float) else v
+        for k, v in resultado.items()
+    }
 
 # ------------------------------------------------------------
 # Serialización de resultados calculados
@@ -66,7 +66,6 @@ def _olla_fase_a_dict(olla_fase):
     peso_seco = olla.peso_seco_kg if olla is not None else None
 
     return {
-        "id": olla_fase.id,
         "olla_id": olla_fase.olla_id,
         "numero_olla": olla.numero_olla if olla is not None else None,
         "capacidad_l": _num(olla.capacidad_l) if olla is not None else None,
@@ -75,40 +74,7 @@ def _olla_fase_a_dict(olla_fase):
         "temperatura_final_agua_c": _num(olla_fase.temperatura_final_agua_c),
         "peso_con_agua_inicial_kg": _num(olla_fase.peso_con_agua_inicial_kg),
         "peso_con_agua_final_kg": _num(olla_fase.peso_con_agua_final_kg),
-        "masa_agua_inicial_kg": _num(_masa_agua(olla_fase.peso_con_agua_inicial_kg, peso_seco)),
-        "masa_agua_final_kg": _num( _masa_agua(olla_fase.peso_con_agua_final_kg, peso_seco)),
     }
-
-
-def _agua_fase(fase):
-    """Suma las masas de agua de todas las ollas de una fase."""
-    iniciales = []
-    finales = []
-
-    for olla_fase in fase.olla_fase:
-        olla = olla_fase.olla
-        if olla is None or olla.peso_seco_kg is None:
-            return None, None, None
-
-        masa_inicial = _masa_agua(olla_fase.peso_con_agua_inicial_kg, olla.peso_seco_kg)
-        if masa_inicial is None:
-            return None, None, None
-        iniciales.append(masa_inicial)
-
-        masa_final = _masa_agua(olla_fase.peso_con_agua_final_kg, olla.peso_seco_kg)
-        if masa_final is not None:
-            finales.append(masa_final)
-
-    if not iniciales:
-        return None, None, None
-
-    masa_inicial = sum(iniciales, Decimal("0"))
-    masa_final = (sum(finales, Decimal("0"))
-        if len(finales) == len(iniciales)
-        else None
-    )
-    evaporada = (masa_inicial - masa_final if masa_final is not None else None)
-    return masa_inicial, masa_final, evaporada
 
 
 # ------------------------------------------------------------
@@ -134,19 +100,10 @@ def _medicion_a_dict(medicion):
 
 
 def _fase_a_dict(fase):
-    resultado = fase.resultados[0] if fase.resultados else None
-    masa_inicial, masa_final, masa_evaporada = _agua_fase(fase)
 
-    ollas = sorted(
-        fase.olla_fase,
-        key=lambda olla_fase: (
-            olla_fase.olla.numero_olla
-            if olla_fase.olla is not None
-            else 0
-        ),
-    )
+    if fase is None:
+        return None
     return {
-        "id": fase.id,
         "tipo_fase": fase.tipo_fase,
         "t_inicial": _fecha(fase.t_inicial),
         "t_final": _fecha(fase.t_final),
@@ -155,14 +112,7 @@ def _fase_a_dict(fase):
         "peso_carbon_con_recipiente_kg": _num(fase.peso_carbon_con_recipiente_kg),
         "peso_cenizas_kg": _num(fase.peso_cenizas_kg),
         "observaciones": fase.observaciones,
-        "agua": {
-            "masa_inicial_kg": _num(masa_inicial),
-            "masa_final_kg": _num(masa_final),
-            "masa_evaporada_kg": _num(masa_evaporada),
-        },
-        "ollas": [_olla_fase_a_dict(olla_fase) for olla_fase in ollas],
         "mediciones_opcionales": _medicion_a_dict(fase.medicion),
-        "resultado": _resultado_a_dict(resultado),
     }
 
 
@@ -253,52 +203,94 @@ def _condiciones_a_dict(condiciones):
     }
 
 
+ORDEN_FASES = {"inicio_frio": 0, "inicio_caliente": 1, "baja_potencia": 2}
+
+def _fase_dict(prueba):
+    fases = []
+    for fase in sorted(prueba.fase_prueba, key=lambda f: ORDEN_FASES.get(f.tipo_fase, 99)):
+        ollas = sorted(
+            fase.olla_fase,
+            key=lambda of: of.olla.numero_olla if of.olla is not None else 0,
+        )
+        fases.append({
+            "id": fase.id,
+            "tipo_fase": fase.tipo_fase,
+            "t_inicial": fase.t_inicial,
+            "t_final": fase.t_final,
+            "peso_combustible_inicial_kg": _num(fase.peso_combustible_inicial_kg),
+            "peso_combustible_final_kg": _num(fase.peso_combustible_final_kg),
+            "peso_carbon_con_recipiente_kg": _num(fase.peso_carbon_con_recipiente_kg),
+            "peso_cenizas_kg": _num(fase.peso_cenizas_kg),
+            "ollas": [_olla_fase_a_dict(of) for of in ollas],
+        })
+    return fases
+
 # ------------------------------------------------------------
 # Consulta principal
 # ------------------------------------------------------------
-def obtener_prueba_completa(prueba_id):
-    """Carga la prueba con sus fases, ollas, mediciones y catálogos."""
-    stmt = (
-        select(PruebaWBT)
-        .options(
-            selectinload(PruebaWBT.fase_prueba)
-            .selectinload(FasePrueba.medicion),
-            selectinload(PruebaWBT.fase_prueba)
-            .selectinload(FasePrueba.resultados),
-            selectinload(PruebaWBT.fase_prueba)
-            .selectinload(FasePrueba.olla_fase)
-            .selectinload(OllaFase.olla),
-            joinedload(PruebaWBT.combustible),
-            joinedload(PruebaWBT.cond_ambientales),
-            joinedload(PruebaWBT.conjunto_pruebas)
-            .joinedload(ConjuntoPruebas.estufa),
-        )
-        .where(PruebaWBT.id == prueba_id)
-    )
-    return db.session.execute(stmt).scalar_one_or_none()
-
-
-def get_datos(prueba_id):
-    """Devuelve todo lo necesario para calcular una prueba, listo para JSON."""
-    prueba = obtener_prueba_completa(prueba_id)
-    if prueba is None:
-        return None
-
-    conjunto = prueba.conjunto_pruebas
-    estufa = conjunto.estufa if conjunto is not None else None
-
-    return {
-        "prueba": _prueba_a_dict(prueba),
-        "conjunto_pruebas": _conjunto_a_dict(conjunto),
-        "estufa": _estufa_a_dict(estufa),
-        "combustible": _combustible_a_dict(prueba.combustible),
-        "condiciones_ambientales": _condiciones_a_dict(prueba.cond_ambientales),
-        "fases": [_fase_a_dict(fase) for fase in prueba.fase_prueba],
-    }
-
 
 def exist_prueba_wbt():
     result = db.session.execute(
         text("SELECT to_regclass('public.prueba_wbt')")
     ).scalar()
     return result is not None
+
+
+def get_data_db(id_prueba):
+    stmt = (
+        select(PruebaWBT)
+        .options(
+            selectinload(PruebaWBT.fase_prueba).selectinload(FasePrueba.medicion),
+            selectinload(PruebaWBT.fase_prueba).selectinload(FasePrueba.olla_fase).selectinload(OllaFase.olla),
+            selectinload(PruebaWBT.fase_prueba).selectinload(FasePrueba.resultados),
+            selectinload(PruebaWBT.cond_ambientales),
+            selectinload(PruebaWBT.combustible),
+        )
+        .where(PruebaWBT.id == id_prueba)
+    )
+    data =  db.session.execute(stmt).scalar_one_or_none()
+    return data
+
+
+def get_data(id):
+    data = get_data_db(id)
+    if data is None:
+        return None
+    return {
+        'fases':_fase_dict(data),
+        'condiciones_ambientales':_condiciones_a_dict(data.cond_ambientales),
+        'combustible':_combustible_a_dict(data.combustible),
+        'prueba': _prueba_a_dict(data)
+    }
+
+
+def calculo_fases(id):
+    dict_prueba = get_data(id)
+    if dict_prueba is None:
+        return None
+
+    combustible = dict_prueba['combustible']
+    cond_ambientales = dict_prueba['condiciones_ambientales']
+    peso_recipiente_carbon_kg = dict_prueba['prueba']['peso_recipiente_carbon_kg']
+
+    resp = {}
+    dc_frio = None
+    
+    for fase in dict_prueba['fases']:
+        tipo = fase['tipo_fase']  
+
+        resultado = calcular_resultado_fase(
+            fase,
+            fase['ollas'],
+            combustible,
+            cond_ambientales,
+            peso_recipiente_carbon_kg,
+            cambio_carbon_frio_kg=dc_frio
+        )
+
+        if tipo == 'inicio_frio':
+            dc_frio = resultado['cambio_carbon_kg']
+
+
+        resp[tipo]=_redondear(resultado)
+    return resp
