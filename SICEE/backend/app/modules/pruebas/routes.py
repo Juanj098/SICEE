@@ -287,3 +287,63 @@ def crear_medicion_opcional():
         return {'error': f'Datos inválidos: {exc}'}, 400
 
     return _a_dict(medicion), 201
+
+
+# ------------------------------------------------------------
+# muestra_humedad
+# La humedad se mide en cada prueba: 3 leños × 3 mediciones.
+# ------------------------------------------------------------
+@bp.get('/muestras_humedad')
+def list_muestras_humedad():
+    try:
+        prueba_wbt_id = _entero_opcional(
+            request.args.get('prueba_wbt_id'), 'prueba_wbt_id'
+        )
+    except (TypeError, ValueError) as exc:
+        return {'error': f'Datos inválidos: {exc}'}, 400
+
+    return [
+        _a_dict(muestra)
+        for muestra in services.list_muestras_humedad(prueba_wbt_id)
+    ]
+
+
+@bp.post('/muestras_humedad')
+def crear_muestras_humedad():
+    """Reemplaza las mediciones de humedad de una prueba.
+
+    Cuerpo: { "prueba_wbt_id": 1, "muestras": [
+        { "numero_lenio": 1, "numero_medicion": 1, "humedad_pct": 8.1 }, ...
+    ] }
+    """
+    datos = request.get_json(silent=True) or {}
+    try:
+        prueba_wbt_id = _entero(datos.get('prueba_wbt_id'), 'prueba_wbt_id')
+        crudas = datos.get('muestras')
+        if not isinstance(crudas, list) or not crudas:
+            raise ValueError('muestras debe ser una lista con al menos una medición')
+
+        muestras = []
+        for cruda in crudas:
+            if not isinstance(cruda, dict):
+                raise ValueError('Cada muestra debe ser un objeto')
+            humedad = _decimal_opcional(cruda.get('humedad_pct'), 'humedad_pct')
+            if humedad is None:
+                raise ValueError('humedad_pct es obligatorio en cada muestra')
+            if humedad < 0 or humedad > 100:
+                raise ValueError('humedad_pct debe estar entre 0 y 100')
+            muestras.append({
+                'numero_lenio': _entero(cruda.get('numero_lenio'), 'numero_lenio'),
+                'numero_medicion': _entero(cruda.get('numero_medicion'), 'numero_medicion'),
+                'humedad_pct': humedad,
+            })
+
+        filas = services.reemplazar_muestras_humedad(prueba_wbt_id, muestras)
+    except (TypeError, ValueError) as exc:
+        return {'error': f'Datos inválidos: {exc}'}, 400
+
+    return {
+        'prueba_wbt_id': prueba_wbt_id,
+        'promedio_humedad_pct': services.promedio_humedad(prueba_wbt_id),
+        'muestras': [_a_dict(muestra) for muestra in filas],
+    }, 201

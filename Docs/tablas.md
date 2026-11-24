@@ -1,6 +1,6 @@
 # DATOS
 
-* Prueba_wbt
+* Prueba_wbt (informacion general)
     ├── Fecha
     ├── Investigador (selección)
     ├── Laboratorio (selección)
@@ -30,7 +30,7 @@
     ├── Material
     └── Descripcion
 
-* Condiciones_ambientales
+* Condiciones_ambientales (mediciones generales)
     ├── Temperatura_c
     ├── Humedad_relativa_pct
     ├── Altitud_m
@@ -39,7 +39,7 @@
     ├── Condicion_viento
     └── Punto_ebullicion_c
 
-* Combustible
+* Combustible (medciones generales)
     ├── Tipo
     ├── Longitud_combustible_cm
     ├── Ancho_combustible_cm
@@ -56,8 +56,7 @@
     ├── Estufa (selección de una existente)
     └── Descripcion
 
-
-* Fase_prueba (una por cada fase: inicio frío, inicio caliente, baja potencia)
+* Fase_prueba (una por cada fase: inicio frío, inicio caliente, baja potencia) (medicion_fases)
     ├── Tipo_fase
     ├── T_inicial
     ├── T_final
@@ -67,25 +66,25 @@
     ├── Peso_cenizas_kg
     └── Observaciones
 
-* Olla (una por cada olla de la prueba)
+* Olla (una por cada olla de la prueba) (mdicion fase)
     ├── Numero_olla
     ├── Peso_seco_kg
     └── Capacidad_l
 
-* Olla_fase (una por cada olla en cada fase)
+* Olla_fase (una por cada olla en cada fase) (medicion fase)
     ├── Temperatura_inicial_agua_c
     ├── Temperatura_final_agua_c
     ├── Peso_con_agua_inicial_kg
     └── Peso_con_agua_final_kg
 
-* Emisiones_prueba (solo si la prueba mide emisiones)
+* Emisiones_prueba (solo si la prueba mide emisiones) 
     ├── Caudal_campana_m3_h
     ├── Metodo_captura
     ├── Metodo_calculo (1 = balance de carbono, 2 = captura total, 3 = totales ingresados)
     ├── Intervalo_muestreo_s
     └── Delta_p_pitot_pa
 
-* Mediciones_opcionales (una por fase, solo si hay mediciones)
+* Mediciones_opcionales (una por fase, solo si hay mediciones) 
     ├── Temperatura_ducto_c
     ├── CO_ppm
     ├── PM_ug_m3
@@ -129,7 +128,7 @@ Basado en la sección 6 del resumen funcional del protocolo. Cada ecuación trae
 | $T_{eb}$ | Punto de ebullición local del agua | °C | `condiciones_ambientales.punto_ebullicion_c` |
 | $T_{aire}$ | Temperatura del aire del laboratorio | °C | `condiciones_ambientales.temperatura_c` |
 | $F_{ini}$, $F_{fin}$ | Peso de la leña antes y después de la fase | kg | `fase_prueba.peso_combustible_*_kg` |
-| $H$ | Humedad de la leña como **fracción** (12 % → 0.12) | – | `combustible.humedad_pct` ÷ 100 |
+| $H$ | Humedad de la leña como **fracción** (12 % → 0.12) | – | promedio de `muestra_humedad.humedad_pct` (3 leños × 3) ÷ 100 |
 | $PCN$ | Poder calorífico neto de la leña | kJ/kg | `combustible.poder_calorifico_neto_mj_kg` × 1000 |
 | $PCN_{carb}$ | Poder calorífico neto del carbón | kJ/kg | `combustible.poder_calorifico_carbon_mj_kg` × 1000 |
 | $C_{fase}$ | Peso del carbón **con su recipiente** al final de la fase | kg | `fase_prueba.peso_carbon_con_recipiente_kg` |

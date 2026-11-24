@@ -6,6 +6,7 @@ from .models import (
     ConjuntoPruebas,
     FasePrueba,
     MedicionesOps,
+    MuestraHumedad,
     Olla,
     OllaFase,
     PruebaWBT,
@@ -217,3 +218,77 @@ def registrar_mediciones_ops(
         pm_total_g=pm_total_g,
     )
     return _guardar(med_ops)
+
+
+# /--- Muestra de humedad ---/
+def list_muestras_humedad(prueba_wbt_id=None):
+    consulta = MuestraHumedad.query
+    if prueba_wbt_id is not None:
+        consulta = consulta.filter(MuestraHumedad.prueba_wbt_id == prueba_wbt_id)
+    return consulta.order_by(
+        MuestraHumedad.numero_lenio,
+        MuestraHumedad.numero_medicion,
+    ).all()
+
+
+def promedio_humedad(prueba_wbt_id):
+    valores = [
+        float(humedad)
+        for (humedad,) in db.session.query(MuestraHumedad.humedad_pct)
+        .filter(MuestraHumedad.prueba_wbt_id == prueba_wbt_id)
+        .all()
+        if humedad is not None
+    ]
+    if not valores:
+        return None
+    return round(sum(valores) / len(valores), 2)
+
+
+def reemplazar_muestras_humedad(prueba_wbt_id, muestras):
+    """Reemplaza las mediciones de humedad de una prueba.
+
+    `muestras` es una lista de dicts con numero_lenio, numero_medicion y
+    humedad_pct (Decimal). Se valida que no haya pares repetidos antes de
+    escribir, para devolver un mensaje claro en vez de un error de Postgres.
+    """
+    if db.session.get(PruebaWBT, prueba_wbt_id) is None:
+        raise ValueError(f'No existe la prueba WBT con id {prueba_wbt_id}')
+    if not muestras:
+        raise ValueError('Debe enviar al menos una medición de humedad')
+
+    vistas = set()
+    filas = []
+    for muestra in muestras:
+        numero_lenio = muestra.get('numero_lenio')
+        numero_medicion = muestra.get('numero_medicion')
+        humedad_pct = muestra.get('humedad_pct')
+        if numero_lenio is None or numero_medicion is None:
+            raise ValueError('Cada muestra requiere numero_lenio y numero_medicion')
+        if humedad_pct is None:
+            raise ValueError('Cada muestra requiere humedad_pct')
+
+        clave = (numero_lenio, numero_medicion)
+        if clave in vistas:
+            raise ValueError(
+                f'Medición repetida: leño {numero_lenio}, medición {numero_medicion}'
+            )
+        vistas.add(clave)
+
+        filas.append(
+            MuestraHumedad(
+                prueba_wbt_id=prueba_wbt_id,
+                numero_lenio=numero_lenio,
+                numero_medicion=numero_medicion,
+                humedad_pct=humedad_pct,
+            )
+        )
+
+    try:
+        MuestraHumedad.query.filter_by(prueba_wbt_id=prueba_wbt_id).delete()
+        db.session.add_all(filas)
+        db.session.commit()
+    except IntegrityError as exc:
+        db.session.rollback()
+        raise ValueError(f'No se pudieron guardar las muestras: {exc.orig}') from exc
+
+    return filas

@@ -88,11 +88,24 @@ Almacena los datos del investigador que realiza una prueba. Esto no representa c
 | `tipo` | `varchar(100)` | NOT NULL | Tipo de combustible. |
 | `descripcion` | `text` | NULL | Descripción del combustible. |
 | `tamano` | `varchar(80)` | NULL | Dimensiones o tamaño. |
-| `humedad_pct` | `numeric(6,3)` | NULL | Contenido de humedad. |
 | `poder_calorifico_neto_mj_kg` | `numeric(10,4)` | NULL | Poder calorífico neto. |
 | `poder_calorifico_bruto_mj_kg` | `numeric(10,4)` | NULL | Poder calorífico bruto. |
 | `contenido_carbono_pct` | `numeric(6,3)` | NULL | Contenido de carbono. |
 | `tipo_alimentacion` | `varchar(30)` | NOT NULL | Continua o por lotes. |
+
+### `muestra_humedad`
+
+Humedad del combustible medida **en cada prueba**: 3 leños × 3 mediciones.
+
+| Campo | Tipo sugerido | Restricciones | Descripción |
+|---|---|---|---|
+| `id` | `bigint` | PK | Identificador de la medición. |
+| `prueba_wbt_id` | `bigint` | FK, NOT NULL | Prueba en la que se midió. |
+| `numero_lenio` | `int` | NOT NULL, > 0 | Leño muestreado (1 a 3). |
+| `numero_medicion` | `int` | NOT NULL, > 0 | Medición dentro del leño (1 a 3). |
+| `humedad_pct` | `numeric(5,2)` | NOT NULL, 0–100 | Humedad medida. |
+
+El promedio de las filas de la prueba es la humedad que usa la ecuación (11). La humedad **no** vive en `combustibles`: cambia con el lote y con el día, y el protocolo la mide en cada ensayo.
 
 ### `pruebas_wbt`
 

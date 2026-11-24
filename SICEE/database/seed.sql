@@ -11,6 +11,7 @@
 TRUNCATE TABLE
     resultado_fase,
     mediciones_opcionales,
+    muestra_humedad,
     olla_fase,
     olla,
     fase_prueba,
@@ -54,15 +55,15 @@ VALUES
     (20.10, 58.00, 2100.00, 101.100, 0.80, 'Sin viento', 98.00);
 
 INSERT INTO combustible
-    (tipo, longitud_combustible_cm, ancho_combustible_cm, humedad_pct,
+    (tipo, longitud_combustible_cm, ancho_combustible_cm,
      poder_calorifico_neto_mj_kg, poder_calorifico_bruto_mj_kg,
      poder_calorifico_carbon_mj_kg, contenido_carbono_carbon_pct,
      tipo_alimentacion, contenido_carbono_pct, descripcion)
 VALUES
-    ('Leña de eucalipto', 30.00, 8.00, 8.00, 18.500, 19.800,
+    ('Leña de eucalipto', 30.00, 8.00, 18.500, 19.800,
      28.500, 80.00, 'Manual', 48.50,
      'Trozos de eucalipto de aproximadamente 30 cm'),
-    ('Briquetas de aserrín', 10.00, 6.00, 10.00, 16.800, 18.000,
+    ('Briquetas de aserrín', 10.00, 6.00, 16.800, 18.000,
      25.000, 75.00, 'Manual', 46.00,
      'Briquetas cilíndricas de aserrín');
 
@@ -84,6 +85,14 @@ INSERT INTO prueba_wbt
 VALUES
     ('2026-11-02 08:00:00', 1, 1, 1, 1, 1, 0.1500, 1, TRUE, '4.2.3',
      'Prueba WBT completa con dos ollas: inicio frío, inicio caliente y baja potencia.');
+
+-- Humedad del combustible: 3 leños × 3 mediciones. Promedio = 8.00 %.
+INSERT INTO muestra_humedad
+    (prueba_wbt_id, numero_lenio, numero_medicion, humedad_pct)
+VALUES
+    (1, 1, 1, 8.00), (1, 1, 2, 8.40), (1, 1, 3, 7.60),
+    (1, 2, 1, 8.20), (1, 2, 2, 7.80), (1, 2, 3, 8.10),
+    (1, 3, 1, 7.90), (1, 3, 2, 8.30), (1, 3, 3, 7.70);
 
 INSERT INTO fase_prueba
     (prueba_wbt_id, tipo_fase, t_inicial, t_final,
@@ -160,6 +169,14 @@ INSERT INTO prueba_wbt
 VALUES
     ('2026-11-03 08:00:00', 2, 2, 2, 2, 2, 0.1500, 1, TRUE, '4.2.3',
      'Prueba registrada pendiente de cálculo.');
+
+-- Humedad del combustible: 3 leños × 3 mediciones. Promedio = 10.00 %.
+INSERT INTO muestra_humedad
+    (prueba_wbt_id, numero_lenio, numero_medicion, humedad_pct)
+VALUES
+    (2, 1, 1, 10.40), (2, 1, 2, 9.60), (2, 1, 3, 10.10),
+    (2, 2, 1, 9.90), (2, 2, 2, 10.20), (2, 2, 3, 9.80),
+    (2, 3, 1, 10.30), (2, 3, 2, 9.70), (2, 3, 3, 10.00);
 
 INSERT INTO fase_prueba
     (prueba_wbt_id, tipo_fase, t_inicial, t_final,
