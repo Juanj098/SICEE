@@ -75,10 +75,12 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 24 | POST | `/api/pruebas/olla_fase` | Olla por fase creada |
 | 25 | GET | `/api/pruebas/mediciones_opcionales` | Lista de mediciones |
 | 26 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
-| 27 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
-| 28 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
-| 29 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
-| 30 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
+| 27 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
+| 28 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
+| 29 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
+| 30 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
+| 31 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
+| 32 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
 
 ---
 
@@ -218,7 +220,6 @@ Prefijo: `/api/catalogos`
     "tipo": "Leña de eucalipto",
     "longitud_combustible_cm": 30.0,
     "ancho_combustible_cm": 8.0,
-    "humedad_pct": 8.0,
     "poder_calorifico_neto_mj_kg": 18.5,
     "poder_calorifico_bruto_mj_kg": 19.8,
     "poder_calorifico_carbon_mj_kg": 28.5,
@@ -239,7 +240,6 @@ Prefijo: `/api/catalogos`
 | `tipo` | string | **Sí** | — |
 | `longitud_combustible_cm` | number | No | `0.00` |
 | `ancho_combustible_cm` | number | No | `0.00` |
-| `humedad_pct` | number | No | `0.00` |
 | `poder_calorifico_neto_mj_kg` | number | No | `0.00` |
 | `poder_calorifico_bruto_mj_kg` | number | No | `0.00` |
 | `poder_calorifico_carbon_mj_kg` | number | No | `0.00` |
@@ -253,7 +253,6 @@ Prefijo: `/api/catalogos`
   "tipo": "Leña de eucalipto",
   "longitud_combustible_cm": 30,
   "ancho_combustible_cm": 8,
-  "humedad_pct": 8,
   "poder_calorifico_neto_mj_kg": 18.5,
   "poder_calorifico_bruto_mj_kg": 19.8,
   "poder_calorifico_carbon_mj_kg": 28.5,
@@ -766,6 +765,71 @@ olla (de la prueba) ────────────────────
 
 ---
 
+### 5.15 `GET /api/pruebas/muestras_humedad`
+
+Devuelve las mediciones de humedad del combustible. La humedad se mide **en cada prueba**: 3 leños × 3 mediciones = 9 filas. El promedio de esas filas es la humedad que usa el cálculo.
+
+**Parámetro opcional:** `?prueba_wbt_id=1` filtra por prueba.
+
+**Respuesta `200`**
+
+```json
+[
+  { "id": 1, "prueba_wbt_id": 1, "numero_lenio": 1, "numero_medicion": 1, "humedad_pct": 8.0 },
+  { "id": 2, "prueba_wbt_id": 1, "numero_lenio": 1, "numero_medicion": 2, "humedad_pct": 8.4 },
+  { "id": 3, "prueba_wbt_id": 1, "numero_lenio": 1, "numero_medicion": 3, "humedad_pct": 7.6 }
+]
+```
+
+### 5.16 `POST /api/pruebas/muestras_humedad`
+
+Reemplaza **todas** las mediciones de humedad de una prueba. Es un POST idempotente por prueba: se envía el juego completo de 9 valores.
+
+**Cuerpo**
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `prueba_wbt_id` | int | **Sí** | Debe existir |
+| `muestras` | array | **Sí** | Al menos una medición |
+| `muestras[].numero_lenio` | int | **Sí** | Mayor que 0 |
+| `muestras[].numero_medicion` | int | **Sí** | Mayor que 0 |
+| `muestras[].humedad_pct` | number | **Sí** | Entre 0 y 100 |
+
+```json
+{
+  "prueba_wbt_id": 1,
+  "muestras": [
+    { "numero_lenio": 1, "numero_medicion": 1, "humedad_pct": 8.0 },
+    { "numero_lenio": 1, "numero_medicion": 2, "humedad_pct": 8.4 },
+    { "numero_lenio": 1, "numero_medicion": 3, "humedad_pct": 7.6 },
+    { "numero_lenio": 2, "numero_medicion": 1, "humedad_pct": 8.2 },
+    { "numero_lenio": 2, "numero_medicion": 2, "humedad_pct": 7.8 },
+    { "numero_lenio": 2, "numero_medicion": 3, "humedad_pct": 8.1 },
+    { "numero_lenio": 3, "numero_medicion": 1, "humedad_pct": 7.9 },
+    { "numero_lenio": 3, "numero_medicion": 2, "humedad_pct": 8.3 },
+    { "numero_lenio": 3, "numero_medicion": 3, "humedad_pct": 7.7 }
+  ]
+}
+```
+
+**Respuesta `201`**
+
+```json
+{
+  "prueba_wbt_id": 1,
+  "promedio_humedad_pct": 8.0,
+  "muestras": [
+    { "id": 1, "prueba_wbt_id": 1, "numero_lenio": 1, "numero_medicion": 1, "humedad_pct": 8.0 }
+  ]
+}
+```
+
+**Errores `400`:** prueba inexistente, lista vacía, medición repetida (mismo leño y número), o `humedad_pct` fuera de 0–100.
+
+> El promedio **no se envía**: lo calcula el backend y se guarda en `muestra_humedad`; el cálculo térmico lo toma de ahí. No existe columna `humedad_pct` en `combustible`.
+
+---
+
 ## 6. Cálculos
 
 Prefijo: `/api/calculos`
@@ -813,8 +877,7 @@ Devuelve la prueba armada para el frontend: prueba, catálogos, fases y ollas de
     "longitud_combustible_cm": 30.0,
     "ancho_combustible_cm": 8.0,
     "humedad_pct": 8.0,
-    "poder_calorifico_neto_mj_kg": 18.5,
-    "poder_calorifico_bruto_mj_kg": 19.8,
+    "poder_calorifico_neto_mj_kg": 18.5,    "poder_calorifico_bruto_mj_kg": 19.8,
     "poder_calorifico_carbon_mj_kg": 28.5,
     "contenido_carbono_carbon_pct": 80.0,
     "tipo_alimentacion": "Manual",
@@ -947,6 +1010,8 @@ La ruta quedó llamando a `services.get_datos()`, pero la función se renombró 
 | `olla` | `UNIQUE (prueba_wbt_id, numero_olla)` | Una olla por número y prueba |
 | `olla_fase` | `UNIQUE (olla_id, fase_id)` | Una medición de olla por fase |
 | `mediciones_opcionales` | `UNIQUE (fase_id)` | Una medición por fase |
+| `muestra_humedad` | `UNIQUE (prueba_wbt_id, numero_lenio, numero_medicion)` | No se repite una medición |
+| `muestra_humedad` | `CHECK (humedad_pct BETWEEN 0 AND 100)` | Rechaza valores fuera de rango |
 | `resultado_fase` | `UNIQUE (fase_id)` | Un resultado por fase (nadie lo escribe aún) |
 
 Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`, pero **no hay endpoint de borrado**.

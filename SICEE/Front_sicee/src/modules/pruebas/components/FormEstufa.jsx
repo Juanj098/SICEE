@@ -114,9 +114,12 @@ export default function FormEstufa({ onGuardado, onCancelar }) {
         <button
           type="submit"
           disabled={guardando}
-          className="rounded-md bg-[#0f6b4f] px-4 py-2 text-sm font-medium text-white
+          className="inline-flex items-center gap-2 rounded-md bg-[#0f6b4f] px-4 py-2 text-sm font-medium text-white
                      hover:bg-[#0b5a42] disabled:opacity-60"
         >
+          {!guardando && (
+            <span className="material-symbols-outlined" aria-hidden="true">cooking</span>
+          )}
           {guardando ? "Guardando…" : "Guardar"}
         </button>
       </div>

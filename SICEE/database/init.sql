@@ -59,7 +59,6 @@ CREATE TABLE combustible (
     tipo                         VARCHAR(100) NOT NULL,
     longitud_combustible_cm      DECIMAL(8,2),
     ancho_combustible_cm         DECIMAL(8,2),
-    humedad_pct                  DECIMAL(5,2),
     poder_calorifico_neto_mj_kg  DECIMAL(8,3),
     poder_calorifico_bruto_mj_kg DECIMAL(8,3),
     poder_calorifico_carbon_mj_kg DECIMAL(8,3),
@@ -142,6 +141,24 @@ COMMENT ON TABLE olla_fase IS
     'La masa de agua se obtiene con peso_con_agua_inicial_kg o peso_con_agua_final_kg menos olla.peso_seco_kg.';
 
 -- ------------------------------------------------------------
+-- Humedad del combustible por prueba
+-- 3 leños × 3 mediciones = 9 filas por prueba.
+-- El promedio se calcula y se inyecta en el cálculo; no se
+-- guarda como columna en combustible.
+-- ------------------------------------------------------------
+CREATE TABLE muestra_humedad (
+    id              INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prueba_wbt_id   INTEGER NOT NULL REFERENCES prueba_wbt(id) ON DELETE CASCADE,
+    numero_lenio    INTEGER NOT NULL CHECK (numero_lenio > 0),
+    numero_medicion INTEGER NOT NULL CHECK (numero_medicion > 0),
+    humedad_pct     DECIMAL(5,2) NOT NULL CHECK (humedad_pct BETWEEN 0 AND 100),
+    UNIQUE (prueba_wbt_id, numero_lenio, numero_medicion)
+);
+
+COMMENT ON TABLE muestra_humedad IS
+    'Humedad medida en cada prueba: 3 leños × 3 mediciones = 9 filas. El promedio de humedad_pct es la humedad usada en el cálculo.';
+
+-- ------------------------------------------------------------
 -- Resultados de cálculo térmico
 -- ------------------------------------------------------------
 CREATE TABLE resultado_fase (
@@ -208,3 +225,4 @@ CREATE INDEX idx_fase_prueba_prueba          ON fase_prueba (prueba_wbt_id);
 CREATE INDEX idx_olla_prueba                 ON olla (prueba_wbt_id);
 CREATE INDEX idx_olla_fase_olla              ON olla_fase (olla_id);
 CREATE INDEX idx_olla_fase_fase              ON olla_fase (fase_id);
+CREATE INDEX idx_muestra_humedad_prueba      ON muestra_humedad (prueba_wbt_id);

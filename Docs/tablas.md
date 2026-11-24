@@ -128,7 +128,7 @@ Basado en la sección 6 del resumen funcional del protocolo. Cada ecuación trae
 | $T_{eb}$ | Punto de ebullición local del agua | °C | `condiciones_ambientales.punto_ebullicion_c` |
 | $T_{aire}$ | Temperatura del aire del laboratorio | °C | `condiciones_ambientales.temperatura_c` |
 | $F_{ini}$, $F_{fin}$ | Peso de la leña antes y después de la fase | kg | `fase_prueba.peso_combustible_*_kg` |
-| $H$ | Humedad de la leña como **fracción** (12 % → 0.12) | – | `combustible.humedad_pct` ÷ 100 |
+| $H$ | Humedad de la leña como **fracción** (12 % → 0.12) | – | promedio de `muestra_humedad.humedad_pct` (3 leños × 3) ÷ 100 |
 | $PCN$ | Poder calorífico neto de la leña | kJ/kg | `combustible.poder_calorifico_neto_mj_kg` × 1000 |
 | $PCN_{carb}$ | Poder calorífico neto del carbón | kJ/kg | `combustible.poder_calorifico_carbon_mj_kg` × 1000 |
 | $C_{fase}$ | Peso del carbón **con su recipiente** al final de la fase | kg | `fase_prueba.peso_carbon_con_recipiente_kg` |

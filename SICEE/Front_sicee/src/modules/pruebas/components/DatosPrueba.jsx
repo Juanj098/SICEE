@@ -51,7 +51,6 @@ export default function DatosPrueba({datos, onChange}){
         >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <Campo label='Fecha' type='date' name='fecha' value = {datos.prueba.fecha} onChange={manejar}/>
-                <Campo label='Número repeticion' type='number' min='1' name='numero_repeticion' value={datos.prueba.numero_repeticion} onChange={manejar} />
                 <Selector
                     label='Investigador'
                     name='investigador_id'
@@ -76,6 +75,8 @@ export default function DatosPrueba({datos, onChange}){
                     onChange={manejar}
                     onNuevo={()=>setModal('estufa')}
                 />
+                <Campo label='Número Repeticion' type='number' name='numero_repeticion' value = {datos.prueba.numero_repeticion} onChange={manejar}/>
+                <Campo label='Peso del recipiente del carbón (kg)' type='number' min='0' step='0.0001' name='peso_recipiente_carbon_kg' value={datos.prueba.peso_recipiente_carbon_kg} onChange={manejar}/>
             </div>
 
             <Modal titulo='Nuevo Investigador' abierto={modal==='investigador'} onCerrar={() => setModal(null)}>

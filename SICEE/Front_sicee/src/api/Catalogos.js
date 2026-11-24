@@ -44,3 +44,34 @@ export async function crearConjuntoPruebas(datos) {
     "No se pudo crear el conjunto de pruebas"
   );
 }
+
+// Crea un combustible. El backend responde el registro completo del catálogo.
+export async function crearCombustible(datos) {
+  return enviar("/catalogos/combustible", datos, "No se pudo crear el combustible");
+}
+
+// Crea las condiciones ambientales de una prueba.
+export async function crearCondicionesAmbientales(datos) {
+  return enviar(
+    "/pruebas/condiciones_ambientales",
+    datos,
+    "No se pudieron crear las condiciones ambientales"
+  );
+}
+
+// ------------------------------------------------------------
+// Consultas
+// ------------------------------------------------------------
+async function listar(ruta, mensajeError) {
+  const res = await fetch(`${API}${ruta}`);
+  const cuerpo = await res.json().catch(() => null);
+  if (!res.ok || cuerpo?.error) {
+    throw new Error(cuerpo?.error ?? `${mensajeError} (HTTP ${res.status})`);
+  }
+  return cuerpo;
+}
+
+// Lista el catálogo de combustibles.
+export async function listarCombustibles() {
+  return listar("/catalogos/combustible", "No se pudieron cargar los combustibles");
+}
