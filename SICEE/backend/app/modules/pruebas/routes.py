@@ -5,9 +5,7 @@ from uuid import UUID
 from flask import request
 
 from . import bp, services
-
-
-TIPOS_FASE = {'inicio_frio', 'inicio_caliente', 'baja_potencia'}
+from .constants import TIPOS_FASE
 
 
 # ------------------------------------------------------------
@@ -346,4 +344,25 @@ def crear_muestras_humedad():
         'prueba_wbt_id': prueba_wbt_id,
         'promedio_humedad_pct': services.promedio_humedad(prueba_wbt_id),
         'muestras': [_a_dict(muestra) for muestra in filas],
+    }, 201
+
+
+# ------------------------------------------------------------
+# prueba completa (transacción única)
+# ------------------------------------------------------------
+@bp.post('/completa')
+def crear_prueba_wbt_completa():
+    datos = request.get_json(silent=True) or {}
+    try:
+        prueba = services.crear_prueba_completa(datos)
+    except (TypeError, ValueError) as exc:
+        return {'error': f'Datos inválidos: {exc}'}, 400
+
+    return {
+        'id': prueba.id,
+        'uuid': str(prueba.uuid),
+        'promedio_humedad_pct': services.promedio_humedad(prueba.id),
+        'muestras': len(prueba.muestra_humedad),
+        'ollas': len(prueba.olla),
+        'fases': len(prueba.fase_prueba),
     }, 201

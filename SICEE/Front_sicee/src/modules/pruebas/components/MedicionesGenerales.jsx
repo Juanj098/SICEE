@@ -230,11 +230,18 @@ export default function MedicionesGenerales({
                   <button
                     type="button"
                     onClick={() => onQuitarOlla(indice)}
-                    className="text-xs text-[#c94f4f] transition hover:underline
+                    title={`Quitar olla ${olla.numero_olla}`}
+                    aria-label={`Quitar olla ${olla.numero_olla}`}
+                    className="rounded p-1 text-[#c94f4f] transition hover:bg-[#fdf1ef]
                                focus-visible:outline-none focus-visible:ring-2
                                focus-visible:ring-[#c94f4f] focus-visible:ring-offset-2"
                   >
-                    Quitar
+                    <span
+                      className="material-symbols-outlined text-[18px]"
+                      aria-hidden="true"
+                    >
+                      delete
+                    </span>
                   </button>
                 )}
               </div>

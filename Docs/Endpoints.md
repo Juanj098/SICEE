@@ -77,10 +77,11 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 26 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
 | 27 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
 | 28 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
-| 29 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
-| 30 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
-| 31 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
-| 32 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
+| 29 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
+| 30 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
+| 31 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
+| 32 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
+| 33 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
 
 ---
 
@@ -827,6 +828,86 @@ Reemplaza **todas** las mediciones de humedad de una prueba. Es un POST idempote
 **Errores `400`:** prueba inexistente, lista vacía, medición repetida (mismo leño y número), o `humedad_pct` fuera de 0–100.
 
 > El promedio **no se envía**: lo calcula el backend y se guarda en `muestra_humedad`; el cálculo térmico lo toma de ahí. No existe columna `humedad_pct` en `combustible`.
+
+---
+
+### 5.17 `POST /api/pruebas/completa`
+
+Crea la prueba con **todas** sus mediciones en **una sola transacción**. O se guarda todo, o no se guarda nada: si cualquier inserción falla, PostgreSQL revierte también las condiciones ambientales, las muestras, las ollas y las fases.
+
+Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formulario. Sustituye la secuencia de 7 POST (condiciones → prueba → muestras → ollas → fases → olla_fase) por una sola llamada.
+
+**Cuerpo**
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `prueba` | object | **Sí** | Datos de `prueba_wbt` |
+| `prueba.fecha` | ISO 8601 | No | `YYYY-MM-DDTHH:MM:SS` |
+| `prueba.investigador_id` | int | **Sí** | Debe existir |
+| `prueba.laboratorio_id` | int | **Sí** | Debe existir |
+| `prueba.combustible_id` | int | **Sí** | Debe existir |
+| `prueba.conjunto_pruebas_id` | int | **Sí** | Debe existir |
+| `prueba.peso_recipiente_carbon_kg` | number | No | Peso del recipiente vacío |
+| `prueba.numero_repeticion` | int | No | Por defecto `1`; único por conjunto |
+| `prueba.observaciones` | string | No | |
+| `condiciones` | object | **Sí** | Se crea junto con la prueba |
+| `muestras` | array | **Sí** | Al menos una; normalmente 9 |
+| `muestras[].numero_lenio` | int | **Sí** | Mayor que 0 |
+| `muestras[].numero_medicion` | int | **Sí** | Mayor que 0 |
+| `muestras[].humedad_pct` | number | **Sí** | Entre 0 y 100 |
+| `ollas` | array | **Sí** | Al menos una; 1–4 en el protocolo |
+| `ollas[].numero_olla` | int | **Sí** | Mayor o igual a 1, sin repetir |
+| `ollas[].peso_seco_kg` | number | No | |
+| `ollas[].capacidad_l` | number | No | |
+| `fases` | array | **Sí** | Una por tipo: `inicio_frio`, `inicio_caliente`, `baja_potencia` |
+| `fases[].tipo_fase` | string | **Sí** | Sin repetir |
+| `fases[].t_inicial` / `t_final` | ISO 8601 | No | `t_final` no puede ser anterior |
+| `fases[].peso_combustible_inicial_kg` | number | No | |
+| `fases[].peso_combustible_final_kg` | number | No | |
+| `fases[].peso_carbon_con_recipiente_kg` | number | No | |
+| `fases[].peso_cenizas_kg` | number | No | |
+| `fases[].observaciones` | string | No | |
+| `fases[].ollas` | array | No | Una entrada por olla medida en esa fase |
+| `fases[].ollas[].numero_olla` | int | **Sí** | Debe existir en `ollas` |
+| `fases[].ollas[].temperatura_inicial_agua_c` | number | No | |
+| `fases[].ollas[].temperatura_final_agua_c` | number | No | |
+| `fases[].ollas[].peso_con_agua_inicial_kg` | number | No | |
+| `fases[].ollas[].peso_con_agua_final_kg` | number | No | |
+
+> Las fases y muestras referencian las ollas por `numero_olla`, no por `id`: al crear todo junto, los ids todavía no existen. SQLAlchemy resuelve las llaves foráneas al hacer `flush` dentro de la transacción.
+
+**Respuesta `201`**
+
+```json
+{
+  "id": 3,
+  "uuid": "b911f9bc-d13e-465f-b580-e85065c7e56e",
+  "promedio_humedad_pct": 9.0,
+  "muestras": 9,
+  "ollas": 2,
+  "fases": 3
+}
+```
+
+**Errores `400`**
+
+| Caso | Mensaje |
+|---|---|
+| Lista vacía | `Debe enviar al menos una entrada en muestras` |
+| Referencia inexistente | `No existe el investigador con id 999` |
+| Repetición duplicada | `duplicate key value violates unique constraint "prueba_wbt_conjunto_pruebas_id_numero_repeticion_key"` |
+| Olla repetida en una fase | `La olla 1 está repetida en la fase inicio_frio` |
+| Fase repetida | `Fase repetida: inicio_frio` |
+| Fase desconocida | `fases[0].tipo_fase debe ser inicio_frio, inicio_caliente o baja_potencia` |
+| Humedad fuera de rango | `humedad_pct debe estar entre 0 y 100` |
+| Olla de fase no declarada | `fases[0].ollas[0] referencia la olla 3, que no está en ollas` |
+| Fechas incoherentes | `fases[0].t_final no puede ser anterior a t_inicial` |
+
+**Atomicidad**
+
+`crear_prueba_completa()` valida todo antes de escribir, arma el grafo de objetos y hace **un solo `commit`**. No hay `commit` intermedio. Cualquier `IntegrityError` dispara `rollback()` y la base queda exactamente como estaba: sin condiciones huérfanas, sin prueba a medias y sin riesgo de duplicar `(conjunto, repetición)` al reintentar.
+
+> `fase_prueba.tipo_fase` es un `ENUM` de PostgreSQL (`tipo_fase_enum`); un valor fuera de los tres válidos falla en la base y también revierte la transacción.
 
 ---
 

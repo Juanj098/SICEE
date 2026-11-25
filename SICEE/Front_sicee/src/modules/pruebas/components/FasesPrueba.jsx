@@ -5,12 +5,68 @@ import { FASES } from "../fases";
 const valor = (dato) =>
   dato === "" || dato === null || dato === undefined ? "—" : dato;
 
+// Degradado amarillo → verde → rojo repartido a lo largo de todo el stepper:
+// cada tramo entre números toma su trozo de la escala para que el color avance
+// de forma continua al pasar de fase.
+const ESCALA = [
+  { en: 0, rgb: [232, 185, 58] },
+  { en: 0.55, rgb: [47, 158, 110] },
+  { en: 1, rgb: [194, 69, 47] },
+];
+
+function colorEn(punto) {
+  return `rgb(${rgbEn(punto).join(", ")})`;
+}
+
+function rgbEn(punto) {
+  const t = Math.min(Math.max(punto, 0), 1);
+
+  for (let i = 1; i < ESCALA.length; i += 1) {
+    const antes = ESCALA[i - 1];
+    const despues = ESCALA[i];
+
+    if (t <= despues.en) {
+      const avance = (t - antes.en) / (despues.en - antes.en);
+      return antes.rgb.map((canal, j) =>
+        Math.round(canal + (despues.rgb[j] - canal) * avance)
+      );
+    }
+  }
+
+  return ESCALA[ESCALA.length - 1].rgb;
+}
+
+// Luminancia relativa (WCAG) para decidir si el número va en blanco o oscuro.
+function luminancia(rgb) {
+  const lineal = (canal) => {
+    const c = canal / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return (
+    0.2126 * lineal(rgb[0]) + 0.7152 * lineal(rgb[1]) + 0.0722 * lineal(rgb[2])
+  );
+}
+
+function degradadoTramo(indice, total) {
+  const tramos = Math.max(total - 1, 1);
+  return `linear-gradient(90deg, ${colorEn(indice / tramos)}, ${colorEn(
+    (indice + 1) / tramos
+  )})`;
+}
+
 function Stepper({ paso, onIr }) {
+  const tramos = Math.max(FASES.length - 1, 1);
+
   return (
     <div className="flex items-center px-1 py-5 sm:px-5">
       {FASES.map((fase, indice) => {
         const completo = indice < paso;
         const activo = indice === paso;
+        const coloreado = completo || activo;
+
+        const canales = rgbEn(indice / tramos);
+        const fondo = `rgb(${canales.join(", ")})`;
+        const tinta = luminancia(canales) > 0.18 ? "#141a17" : "#ffffff";
 
         return (
           <div
@@ -24,12 +80,18 @@ function Stepper({ paso, onIr }) {
             >
               <span
                 className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition
-                  ${
-                    completo || activo
-                      ? "bg-[#0f6b4f] text-white"
-                      : "bg-[#e9f0ec] text-[#5d6862]"
-                  }
-                  ${activo ? "ring-4 ring-[#d8e8e0]" : ""}`}
+                  ${coloreado ? "" : "bg-[#e9f0ec] text-[#5d6862]"}`}
+                style={
+                  coloreado
+                    ? {
+                        backgroundColor: fondo,
+                        color: tinta,
+                        boxShadow: activo
+                          ? `0 0 0 4px rgba(${canales.join(", ")}, 0.28)`
+                          : undefined,
+                      }
+                    : undefined
+                }
               >
                 {completo ? (
                   <span
@@ -55,9 +117,14 @@ function Stepper({ paso, onIr }) {
 
             {indice !== FASES.length - 1 && (
               <span
-                className={`mx-2 h-[2px] flex-1 sm:mx-4 ${
-                  completo ? "bg-[#0f6b4f]" : "bg-[#e9f0ec]"
+                className={`mx-2 h-[3px] flex-1 rounded-full sm:mx-4 ${
+                  completo ? "" : "bg-[#e9f0ec]"
                 }`}
+                style={
+                  completo
+                    ? { background: degradadoTramo(indice, FASES.length) }
+                    : undefined
+                }
               />
             )}
           </div>
