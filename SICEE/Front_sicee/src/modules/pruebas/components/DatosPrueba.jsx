@@ -26,6 +26,14 @@ export default function DatosPrueba({datos, onChange}){
         setModal(null)
     }
 
+    // Sólo quita al investigador de la lista del formulario: el backend aún no
+    // tiene endpoint de borrado, así que el registro sigue en la base.
+    const alEliminarInvestigador = (id) => {
+        if (!id) return
+        setInvestigador((lista) => lista.filter((i) => String(i.id) !== String(id)))
+        if (String(datos.prueba.investigador_id) === String(id)) onChange('investigador_id', '')
+    }
+
     const alCrearLaboratorio = (nuevo) => {
         setLaboratorios((lista) => [...lista, {id: nuevo.id, texto: nuevo.institucion}])
         onChange('laboratorio_id', String(nuevo.id))
@@ -58,6 +66,7 @@ export default function DatosPrueba({datos, onChange}){
                     value={datos.prueba.investigador_id}
                     onChange={manejar}
                     onNuevo={()=>setModal('investigador')}
+                    onEliminar={alEliminarInvestigador}
                 />
                 <Selector
                     label='Laboratorio'

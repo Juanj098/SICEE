@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.dialects.postgresql import ENUM
+
 from app.extensions import db
 
 
@@ -75,7 +77,16 @@ class FasePrueba(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     prueba_wbt_id = db.Column(db.Integer, db.ForeignKey("prueba_wbt.id", ondelete="CASCADE"), nullable=False)
-    tipo_fase = db.Column(db.String(48), nullable=False)
+    tipo_fase = db.Column(
+        ENUM(
+            'inicio_frio',
+            'inicio_caliente',
+            'baja_potencia',
+            name='tipo_fase_enum',
+            create_type=False,
+        ),
+        nullable=False,
+    )
     t_inicial = db.Column(db.DateTime)
     t_final = db.Column(db.DateTime)
     peso_combustible_inicial_kg = db.Column(db.Numeric(8, 4))
