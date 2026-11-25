@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.dialects.postgresql import ENUM
+
 from app.extensions import db
 
 
@@ -53,6 +55,12 @@ class PruebaWBT(db.Model):
     conjunto_pruebas = db.relationship("ConjuntoPruebas", back_populates="prueba_wbt")
     olla = db.relationship("Olla", back_populates="prueba_wbt", cascade="all, delete-orphan")
     fase_prueba = db.relationship("FasePrueba", back_populates="prueba", cascade="all, delete-orphan")
+    muestra_humedad = db.relationship(
+        "MuestraHumedad",
+        back_populates="prueba_wbt",
+        cascade="all, delete-orphan",
+        order_by="MuestraHumedad.numero_lenio, MuestraHumedad.numero_medicion",
+    )
 
     __table_args__ = (
         db.UniqueConstraint(
@@ -69,7 +77,16 @@ class FasePrueba(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     prueba_wbt_id = db.Column(db.Integer, db.ForeignKey("prueba_wbt.id", ondelete="CASCADE"), nullable=False)
-    tipo_fase = db.Column(db.String(48), nullable=False)
+    tipo_fase = db.Column(
+        ENUM(
+            'inicio_frio',
+            'inicio_caliente',
+            'baja_potencia',
+            name='tipo_fase_enum',
+            create_type=False,
+        ),
+        nullable=False,
+    )
     t_inicial = db.Column(db.DateTime)
     t_final = db.Column(db.DateTime)
     peso_combustible_inicial_kg = db.Column(db.Numeric(8, 4))
@@ -167,4 +184,29 @@ class OllaFase(db.Model):
             "fase_id",
             name="uq_olla_fase_olla_fase",
         ),
+    )
+
+
+# muestra_humedad
+class MuestraHumedad(db.Model):
+    __tablename__ = "muestra_humedad"
+
+    id = db.Column(db.Integer, primary_key=True)
+    prueba_wbt_id = db.Column(db.Integer, db.ForeignKey("prueba_wbt.id", ondelete="CASCADE"), nullable=False)
+    numero_lenio = db.Column(db.Integer, nullable=False)
+    numero_medicion = db.Column(db.Integer, nullable=False)
+    humedad_pct = db.Column(db.Numeric(5, 2), nullable=False)
+
+    prueba_wbt = db.relationship("PruebaWBT", back_populates="muestra_humedad")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "prueba_wbt_id",
+            "numero_lenio",
+            "numero_medicion",
+            name="uq_muestra_humedad_prueba_lenio_medicion",
+        ),
+        db.CheckConstraint("numero_lenio > 0", name="ck_muestra_humedad_lenio"),
+        db.CheckConstraint("numero_medicion > 0", name="ck_muestra_humedad_medicion"),
+        db.CheckConstraint("humedad_pct BETWEEN 0 AND 100", name="ck_muestra_humedad_rango"),
     )

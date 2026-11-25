@@ -1,5 +1,9 @@
 
 // --------------SICEE--------------
+// Nota: emisiones_prueba, resultado_emisiones_fase y resultado_prueba están
+// modeladas aquí pero todavía no se crean en database/init.sql (módulo de
+// emisiones y promedios pendiente).
+
 enum tipo_fase_enum {
   inicio_frio     [note: 'Inicio frío, alta potencia']
   inicio_caliente [note: 'Inicio caliente, alta potencia']
@@ -8,25 +12,25 @@ enum tipo_fase_enum {
 
 Table investigador {
     id integer [primary key, increment]
-    nombre varchar
+    nombre varchar(150) [not null]
 }
 
 Table laboratorio {
     id integer [primary key, increment]
-    institucion varchar
-    direccion varchar
-    descripcion varchar
+    institucion varchar(150) [not null]
+    direccion varchar(255)
+    descripcion varchar(500)
 }
 
 Table estufa {
     id integer [primary key, increment]
-    marca varchar
-    fabricante varchar
+    marca varchar(100)
+    fabricante varchar(100)
     area_camara_cm2 decimal(12,4)
     altura_cm decimal(12,4)
     numero_hornillas integer
-    material varchar
-    descripcion varchar
+    material varchar(100)
+    descripcion varchar(500)
 }
 
 Table condiciones_ambientales {
@@ -36,16 +40,15 @@ Table condiciones_ambientales {
     altitud_m decimal(7,2)
     presion_atmosferica_kpa decimal(7,3)
     viento_ms decimal(5,2)
-    condicion_viento varchar(50)
+    condicion_viento varchar(500)
     punto_ebullicion_c decimal(6,2)
 }
 
 Table combustible {
   id integer [primary key, increment]
-  tipo varchar [not null]
+  tipo varchar(100) [not null]
   longitud_combustible_cm decimal(8,2)
   ancho_combustible_cm decimal(8,2)
-  humedad_pct decimal(5,2)
   poder_calorifico_neto_mj_kg decimal(8,3)
   poder_calorifico_bruto_mj_kg decimal(8,3)
   poder_calorifico_carbon_mj_kg decimal(8,3)
@@ -129,6 +132,21 @@ Table prueba_wbt {
   }
 }
 
+Table muestra_humedad {
+  id integer [primary key, increment]
+  prueba_wbt_id integer [not null, ref: > prueba_wbt.id]
+  numero_lenio integer [not null]
+  numero_medicion integer [not null]
+  humedad_pct decimal(5,2) [not null]
+
+  indexes {
+    (prueba_wbt_id, numero_lenio, numero_medicion) [unique]
+    prueba_wbt_id
+  }
+
+  Note: 'Humedad medida en cada prueba: 3 leños × 3 mediciones = 9 filas, humedad_pct entre 0 y 100 (CHECK en init.sql). El promedio de estas filas es la humedad que usa la ecuación (11); la humedad no se guarda en combustible.'
+}
+
 Table resultado_fase {
   id integer [primary key, increment] 
   fase_id integer [not null, unique, ref: - fase_prueba.id] 
@@ -151,7 +169,7 @@ Table resultado_fase {
   cambio_carbon_kg decimal(6,4)
   consumo_especifico_corregido_g_l decimal(8,3)
 
-  Note: 'Resultado agregado por fase. Las masas y energías de agua se suman sobre todas las ollas de olla_fase; el combustible y los tiempos son de la fase.'
+  Note: 'Resultado agregado por fase. Las masas y energías de agua se suman sobre todas las ollas de olla_fase; el combustible y los tiempos son de la fase. tiempo_ebullicion_min lleva Δt en inicio frío/caliente y NULL en baja potencia.'
 }
 
 Table mediciones_opcionales {
@@ -205,7 +223,7 @@ Table resultado_emisiones_fase {
 }
 
 Table resultado_prueba {
-  id integer [primary key]
+  id integer [primary key, increment]
   prueba_wbt_id integer [not null, unique, ref: - prueba_wbt.id]
 
   // Energía
@@ -215,7 +233,6 @@ Table resultado_prueba {
   combustible_ref_5l_g decimal(10,3)
   energia_ref_5l_kj decimal(12,3)
 
-  // Emisiones (vacías si la prueba no tiene mediciones)
   co_alta_g_mj decimal(10,4)
   pm_alta_mg_mj decimal(10,4)
   co_baja_g_min_l decimal(10,6)

@@ -1,1 +1,30 @@
 @import 'tailwindcss';
+
+/* Material Symbols: sólo los íconos usados (person, cooking, fireplace,
+   water_voc, save, arrow_back, arrow_forward, check, local_fire_department,
+   water_drop, description, delete), descargados de Google Fonts. Para agregar
+   más hay que volver a descargar el woff2 con la lista completa en icon_names,
+   reemplazar el archivo y subir el ?v= de la url para romper la caché. */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('./assets/fonts/material-symbols.woff2?v=2') format('woff2');
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.2em;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga' 1, 'rlig' 1;
+  -webkit-font-smoothing: antialiased;
+}

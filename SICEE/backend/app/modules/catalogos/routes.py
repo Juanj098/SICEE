@@ -28,7 +28,6 @@ def newCombustible():
     try:
         longitud_combustible_cm = float(datos.get('longitud_combustible_cm') or 0.00)
         ancho_combustible_cm = float(datos.get('ancho_combustible_cm') or 0.00)
-        humedad_pct = float(datos.get('humedad_pct') or 0.00)
         poder_calorifico_neto_mj_kg = float(datos.get('poder_calorifico_neto_mj_kg') or 0.00)
         poder_calorifico_bruto_mj_kg = float(datos.get('poder_calorifico_bruto_mj_kg') or 0.00)
         poder_calorifico_carbon_mj_kg = float(datos.get('poder_calorifico_carbon_mj_kg') or 0.00)
@@ -43,7 +42,6 @@ def newCombustible():
         tipo,
         longitud_combustible_cm,
         ancho_combustible_cm,
-        humedad_pct,
         poder_calorifico_neto_mj_kg,
         poder_calorifico_bruto_mj_kg,
         poder_calorifico_carbon_mj_kg,

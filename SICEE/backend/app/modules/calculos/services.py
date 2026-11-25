@@ -119,6 +119,14 @@ def _fase_a_dict(fase):
 # ------------------------------------------------------------
 # Serialización de la prueba y sus catálogos
 # ------------------------------------------------------------
+def _promedio_humedad(muestras):
+    """Promedio de las mediciones de humedad de la prueba (3 leños × 3)."""
+    valores = [float(m.humedad_pct) for m in muestras if m.humedad_pct is not None]
+    if not valores:
+        return None
+    return round(sum(valores) / len(valores), 2)
+
+
 def _prueba_a_dict(prueba):
     conjunto = prueba.conjunto_pruebas
     estufa_id = conjunto.estufa_id if conjunto is not None else None
@@ -135,6 +143,7 @@ def _prueba_a_dict(prueba):
         "estufa_id": estufa_id,
         "peso_recipiente_carbon_kg": _num(prueba.peso_recipiente_carbon_kg),
         "numero_repeticion": prueba.numero_repeticion,
+        "humedad_promedio_pct": _promedio_humedad(prueba.muestra_humedad),
         "es_valida": prueba.es_valida,
         "motivo_invalidez": prueba.motivo_invalidez,
         "version_protocolo": prueba.version_protocolo,
@@ -177,7 +186,6 @@ def _combustible_a_dict(combustible):
         "tipo": combustible.tipo,
         "longitud_combustible_cm": _num(combustible.longitud_combustible_cm),
         "ancho_combustible_cm": _num(combustible.ancho_combustible_cm),
-        "humedad_pct": _num(combustible.humedad_pct),
         "poder_calorifico_neto_mj_kg": _num(combustible.poder_calorifico_neto_mj_kg),
         "poder_calorifico_bruto_mj_kg": _num(combustible.poder_calorifico_bruto_mj_kg),
         "poder_calorifico_carbon_mj_kg": _num(combustible.poder_calorifico_carbon_mj_kg),
@@ -245,6 +253,7 @@ def get_data_db(id_prueba):
             selectinload(PruebaWBT.fase_prueba).selectinload(FasePrueba.resultados),
             selectinload(PruebaWBT.cond_ambientales),
             selectinload(PruebaWBT.combustible),
+            selectinload(PruebaWBT.muestra_humedad),
         )
         .where(PruebaWBT.id == id_prueba)
     )
@@ -256,10 +265,17 @@ def get_data(id):
     data = get_data_db(id)
     if data is None:
         return None
+
+    # La humedad no vive en el catálogo de combustible: se mide en cada prueba
+    # (3 leños × 3 mediciones) y su promedio alimenta la ecuación (11).
+    combustible = _combustible_a_dict(data.combustible)
+    if combustible is not None:
+        combustible['humedad_pct'] = _promedio_humedad(data.muestra_humedad)
+
     return {
         'fases':_fase_dict(data),
         'condiciones_ambientales':_condiciones_a_dict(data.cond_ambientales),
-        'combustible':_combustible_a_dict(data.combustible),
+        'combustible':combustible,
         'prueba': _prueba_a_dict(data)
     }
 
@@ -272,6 +288,13 @@ def calculo_fases(id):
     combustible = dict_prueba['combustible']
     cond_ambientales = dict_prueba['condiciones_ambientales']
     peso_recipiente_carbon_kg = dict_prueba['prueba']['peso_recipiente_carbon_kg']
+
+    if combustible is None:
+        raise ValueError('La prueba no tiene combustible asociado')
+    if combustible.get('humedad_pct') is None:
+        raise ValueError(
+            'La prueba no tiene mediciones de humedad del combustible (muestra_humedad)'
+        )
 
     resp = {}
     dc_frio = None

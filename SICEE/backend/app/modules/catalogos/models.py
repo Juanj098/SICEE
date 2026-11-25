@@ -37,7 +37,6 @@ class Combustibles(db.Model):
     tipo = db.Column(db.String(100), nullable=False)
     longitud_combustible_cm = db.Column(db.Numeric(8, 2))
     ancho_combustible_cm = db.Column(db.Numeric(8, 2))
-    humedad_pct = db.Column(db.Numeric(5, 2))
     poder_calorifico_neto_mj_kg = db.Column(db.Numeric(8, 3))
     poder_calorifico_bruto_mj_kg = db.Column(db.Numeric(8, 3))
     poder_calorifico_carbon_mj_kg = db.Column(db.Numeric(8, 3))
