@@ -1,9 +1,7 @@
-// Base de la API. En desarrollo se usa el proxy de Vite (/api -> localhost:5000).
+import {get, post, patch} from './Client'
+
 const API = (import.meta.env.VITE_API_URL ?? "/api").replace(/\/$/, "");
 
-// Envía un POST y traduce la respuesta del backend a un objeto o a un Error.
-// El backend a veces responde 200 con { error } (p. ej. POST /catalogos/labs),
-// por eso también se revisa el cuerpo.
 async function enviar(ruta, datos, mensajeError) {
   const res = await fetch(`${API}${ruta}`, {
     method: "POST",
@@ -20,20 +18,15 @@ async function enviar(ruta, datos, mensajeError) {
   return cuerpo;
 }
 
-// Crea un investigador. El backend responde { id, nombre }.
-export async function crearInvestigador(datos) {
-  return enviar("/investigadores/", datos, "No se pudo crear el investigador");
-}
 
-// Crea un laboratorio. El backend responde { id, institucion, direccion, descripcion }.
-export async function crearLaboratorio(datos) {
-  return enviar("/catalogos/labs", datos, "No se pudo crear el laboratorio");
-}
+export const listActivos =()=> get('/investigadores/list_activos')
+export const crearInvestigador = (datos) => post('/investigadores/', datos)
+export const crearLaboratorio = (datos) => post('/catalogos/labs', datos)
+export const crearEstufa = (datos) => post('/catalogos/estufas', datos)
+export const crearCombustible = (datos) => post('/catalogos/combustible', datos)
+export const eliminatInvestigador = (id) => patch(`/investigadores/${id}`, {activo:false})
 
-// Crea una estufa. El backend responde { id, marca, fabricante, ... }.
-export async function crearEstufa(datos) {
-  return enviar("/catalogos/estufas", datos, "No se pudo crear la estufa");
-}
+
 
 // Crea un conjunto de pruebas para una estufa.
 // El backend responde { id, estufa_id, descripcion }.
@@ -45,10 +38,7 @@ export async function crearConjuntoPruebas(datos) {
   );
 }
 
-// Crea un combustible. El backend responde el registro completo del catálogo.
-export async function crearCombustible(datos) {
-  return enviar("/catalogos/combustible", datos, "No se pudo crear el combustible");
-}
+
 
 // Crea las condiciones ambientales de una prueba.
 export async function crearCondicionesAmbientales(datos) {
@@ -59,19 +49,3 @@ export async function crearCondicionesAmbientales(datos) {
   );
 }
 
-// ------------------------------------------------------------
-// Consultas
-// ------------------------------------------------------------
-async function listar(ruta, mensajeError) {
-  const res = await fetch(`${API}${ruta}`);
-  const cuerpo = await res.json().catch(() => null);
-  if (!res.ok || cuerpo?.error) {
-    throw new Error(cuerpo?.error ?? `${mensajeError} (HTTP ${res.status})`);
-  }
-  return cuerpo;
-}
-
-// Lista el catálogo de combustibles.
-export async function listarCombustibles() {
-  return listar("/catalogos/combustible", "No se pudieron cargar los combustibles");
-}

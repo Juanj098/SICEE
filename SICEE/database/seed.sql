@@ -27,9 +27,9 @@ RESTART IDENTITY CASCADE;
 -- ------------------------------------------------------------
 -- Catálogos
 -- ------------------------------------------------------------
-INSERT INTO investigador (nombre) VALUES
-    ('Dra. María González'),
-    ('Ing. Carlos Ramírez');
+INSERT INTO investigador (nombre, activo) VALUES
+    ('Dra. María González', TRUE),
+    ('Ing. Carlos Ramírez', TRUE);
 
 INSERT INTO laboratorio (institucion, direccion, descripcion) VALUES
     ('CII - Centro de Investigación e Innovación', 'Quito, Ecuador',

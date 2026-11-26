@@ -5,7 +5,7 @@ import { Campo, Selector } from "./Campo";
 import Modal from "./Modal";
 import FormCombustible from "./FormCombustible";
 import FichaCombustible from "./FichaCombustible";
-import { listarCombustibles } from "../../../api/Catalogos";
+import {get} from '../../../api/Client'
 
 export default function MedicionesGenerales({
   datos,
@@ -18,8 +18,6 @@ export default function MedicionesGenerales({
 }) {
   const { condiciones = {}, prueba = {}, muestras = [], ollas = [] } = datos;
 
-  // Promedio sólo para mostrar: el cálculo oficial lo hace el backend al
-  // guardar las 9 mediciones de muestra_humedad.
   const valoresHumedad = muestras
     .map((m) => m.humedad_pct)
     .filter((v) => v !== "" && v !== null && v !== undefined)
@@ -36,11 +34,9 @@ export default function MedicionesGenerales({
 
   useEffect(() => {
     let activo = true;
-    listarCombustibles()
+    get("/catalogos/combustible")
       .then((lista) => {
         if (!activo) return;
-        // Se guardan los datos completos: el selector usa `texto` y la ficha
-        // muestra el resto de campos de la especie elegida.
         setCombustibles(lista.map((c) => ({ ...c, texto: c.tipo })));
         setErrorLista("");
       })

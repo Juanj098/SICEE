@@ -1,24 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Seccion from "./Seccion";
 import { Campo, Selector } from "./Campo";
 import Modal from "./Modal";
 import FormInvestigador from "./FormInvestigador";
 import FormLaboratorio from "./FormLaboratorio";
 import FormEstufa from "./FormEstufa";
-import { crearConjuntoPruebas } from "../../../api/Catalogos";
+import { listActivos, crearConjuntoPruebas, eliminatInvestigador } from "../../../api/Catalogos";
 
-const INVESTIGADORES = [{ id: 1, texto: "Dra. María González" }, { id: 2, texto: "Ing. Carlos Ramírez" }];
 const LABORATORIOS = [{ id: 1, texto: "CII - Centro de Investigación e Innovación" }];
 const ESTUFAS = [{ id: 1, texto: "Rocket A1" }];
 
 export default function DatosPrueba({datos, onChange}){
 
+    
     const manejar = (e) => onChange(e.target.name, e.target.value)
 
     const [modal, setModal] = useState(null)
-    const [investigador, setInvestigador] = useState(INVESTIGADORES)
+    const [investigador, setInvestigador] = useState([])
     const [laboratorios, setLaboratorios] = useState(LABORATORIOS)
     const [estufas, setEstufas] = useState(ESTUFAS)
+    const [error, setError] = useState('')
 
     const alCrearInvestigador = (nuevo) => {
         setInvestigador((lista) => [...lista, {id: nuevo.id, texto: nuevo.nombre}])
@@ -26,12 +27,17 @@ export default function DatosPrueba({datos, onChange}){
         setModal(null)
     }
 
-    // Sólo quita al investigador de la lista del formulario: el backend aún no
-    // tiene endpoint de borrado, así que el registro sigue en la base.
-    const alEliminarInvestigador = (id) => {
+    const alEliminarInvestigador = async (id) => {
         if (!id) return
-        setInvestigador((lista) => lista.filter((i) => String(i.id) !== String(id)))
-        if (String(datos.prueba.investigador_id) === String(id)) onChange('investigador_id', '')
+        try {
+            await eliminatInvestigador(id)
+            setInvestigador((lista) => lista.filter((i) => String(i.id) !== String(id)))
+            if (String(datos.prueba.investigador_id) === String(id)) {
+                onChange('investigador_id', '')
+            }
+        } catch (error) {
+            setError(error.message)
+        }
     }
 
     const alCrearLaboratorio = (nuevo) => {
@@ -40,8 +46,6 @@ export default function DatosPrueba({datos, onChange}){
         setModal(null)
     }
 
-    // La prueba se registra contra un conjunto de pruebas, no contra la estufa:
-    // al crear la estufa se crea también su conjunto y se selecciona ese id.
     const alCrearEstufa = async (nueva) => {
         const conjunto = await crearConjuntoPruebas({
             estufa_id: nueva.id,
@@ -51,6 +55,13 @@ export default function DatosPrueba({datos, onChange}){
         onChange('conjunto_pruebas_id', String(conjunto.id))
         setModal(null)
     }
+
+    useEffect(()=>{
+        listActivos()
+        .then((lista)=> setInvestigador(lista.map((i)=>({id: i.id, texto: i.nombre})))
+        )
+        .catch((e)=>setError(e.message))
+    },[])
 
     return(
         <Seccion
@@ -87,6 +98,8 @@ export default function DatosPrueba({datos, onChange}){
                 <Campo label='Número Repeticion' type='number' name='numero_repeticion' value = {datos.prueba.numero_repeticion} onChange={manejar}/>
                 <Campo label='Peso del recipiente del carbón (kg)' type='number' min='0' step='0.0001' name='peso_recipiente_carbon_kg' value={datos.prueba.peso_recipiente_carbon_kg} onChange={manejar}/>
             </div>
+
+            {error && <p className="mt-2 text-sm text-[#c94f4f]">{error}</p>}
 
             <Modal titulo='Nuevo Investigador' abierto={modal==='investigador'} onCerrar={() => setModal(null)}>
                 <FormInvestigador onGuardado={alCrearInvestigador} onCancelar={()=>setModal(null)}/>

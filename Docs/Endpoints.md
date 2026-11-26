@@ -18,7 +18,7 @@
 | Fechas | Se aceptan en ISO 8601: `2026-11-02`, `2026-11-02T08:00`, `2026-11-02T08:00:00` |
 | Cadenas vacías | Un `""` se guarda como `NULL`. Las cadenas se recortan (`strip`) antes de guardar. |
 | Nulos | Los campos opcionales se devuelven como `null` |
-| Métodos | Solo `GET` y `POST`. **No hay `PUT`, `PATCH` ni `DELETE`** en ningún módulo. |
+| Métodos | `GET` y `POST` en todos los módulos; `PATCH` solo en `investigadores` (baja lógica). No hay `PUT` ni `DELETE`. |
 | Prefijos | `/api/investigadores`, `/api/catalogos`, `/api/pruebas`, `/api/calculos` |
 
 ### Formato de error
@@ -55,33 +55,35 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 4 | POST | `/api/investigadores/` | Investigador creado |
 | 5 | GET | `/api/investigadores/<id>` | Un investigador |
 | 6 | GET | `/api/investigadores/searchId` | Investigador por nombre |
-| 7 | GET | `/api/catalogos/combustible` | Lista de combustibles |
-| 8 | POST | `/api/catalogos/combustible` | Combustible creado |
-| 9 | GET | `/api/catalogos/estufas` | Lista de estufas |
-| 10 | POST | `/api/catalogos/estufas` | Estufa creada |
-| 11 | GET | `/api/catalogos/labs` | Lista de laboratorios |
-| 12 | POST | `/api/catalogos/labs` | Laboratorio creado |
-| 13 | GET | `/api/pruebas/condiciones_ambientales` | Lista de condiciones |
-| 14 | POST | `/api/pruebas/condiciones_ambientales` | Condiciones creadas |
-| 15 | GET | `/api/pruebas/conjunto_pruebas` | Lista de conjuntos |
-| 16 | POST | `/api/pruebas/conjunto_pruebas` | Conjunto creado |
-| 17 | GET | `/api/pruebas/pruebas_wbt` | Lista de pruebas |
-| 18 | POST | `/api/pruebas/pruebas_wbt` | Prueba creada |
-| 19 | GET | `/api/pruebas/Fase_Prueba` | Lista de fases |
-| 20 | POST | `/api/pruebas/Fase_Prueba` | Fase creada |
-| 21 | GET | `/api/pruebas/ollas` | Lista de ollas |
-| 22 | POST | `/api/pruebas/ollas` | Olla creada |
-| 23 | GET | `/api/pruebas/olla_fase` | Lista de ollas por fase |
-| 24 | POST | `/api/pruebas/olla_fase` | Olla por fase creada |
-| 25 | GET | `/api/pruebas/mediciones_opcionales` | Lista de mediciones |
-| 26 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
-| 27 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
-| 28 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
-| 29 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
-| 30 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
-| 31 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
-| 32 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
-| 33 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
+| 7 | PATCH | `/api/investigadores/<id>` | Investigador activado o desactivado |
+| 8 | GET | `/api/investigadores/list_activos` | ⚠️ Igual que `GET /`: todavía no filtra |
+| 9 | GET | `/api/catalogos/combustible` | Lista de combustibles |
+| 10 | POST | `/api/catalogos/combustible` | Combustible creado |
+| 11 | GET | `/api/catalogos/estufas` | Lista de estufas |
+| 12 | POST | `/api/catalogos/estufas` | Estufa creada |
+| 13 | GET | `/api/catalogos/labs` | Lista de laboratorios |
+| 14 | POST | `/api/catalogos/labs` | Laboratorio creado |
+| 15 | GET | `/api/pruebas/condiciones_ambientales` | Lista de condiciones |
+| 16 | POST | `/api/pruebas/condiciones_ambientales` | Condiciones creadas |
+| 17 | GET | `/api/pruebas/conjunto_pruebas` | Lista de conjuntos |
+| 18 | POST | `/api/pruebas/conjunto_pruebas` | Conjunto creado |
+| 19 | GET | `/api/pruebas/pruebas_wbt` | Lista de pruebas |
+| 20 | POST | `/api/pruebas/pruebas_wbt` | Prueba creada |
+| 21 | GET | `/api/pruebas/Fase_Prueba` | Lista de fases |
+| 22 | POST | `/api/pruebas/Fase_Prueba` | Fase creada |
+| 23 | GET | `/api/pruebas/ollas` | Lista de ollas |
+| 24 | POST | `/api/pruebas/ollas` | Olla creada |
+| 25 | GET | `/api/pruebas/olla_fase` | Lista de ollas por fase |
+| 26 | POST | `/api/pruebas/olla_fase` | Olla por fase creada |
+| 27 | GET | `/api/pruebas/mediciones_opcionales` | Lista de mediciones |
+| 28 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
+| 29 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
+| 30 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
+| 31 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
+| 32 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
+| 33 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
+| 34 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
+| 35 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
 
 ---
 
@@ -125,7 +127,7 @@ Prefijo: `/api/investigadores`
 
 ### 3.1 `GET /api/investigadores/`
 
-Devuelve todos los investigadores.
+Devuelve todos los investigadores, **activos e inactivos**: `services.listar()` no filtra todavía y la respuesta no incluye `activo`, así que no se pueden distinguir.
 
 **Respuesta `200`**
 
@@ -201,6 +203,52 @@ Busca por nombre exacto. **Aunque es `GET`, espera un cuerpo JSON.**
 ```
 
 **Sin nombre:** `200` con `{ "error": "Ingrese nombre del investigador a buscar" }`.
+
+### 3.5 `PATCH /api/investigadores/<id>`
+
+Activa o desactiva un investigador (**baja lógica**). No borra la fila: las pruebas que lo referencian siguen intactas y la llave foránea `prueba_wbt.investigador_id` no se toca.
+
+**Cuerpo**
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `activo` | bool | **Sí** | `false` desactiva, `true` reactiva |
+
+```json
+{ "activo": false }
+```
+
+**Respuesta `200`**
+
+```json
+{ "msg": "Investigador actualizado" }
+```
+
+**Respuesta `404`**
+
+```json
+{ "error": "Investigador no encontrado" }
+```
+
+**Errores no controlados (`500`)**
+
+| Caso | Causa |
+|---|---|
+| Cuerpo vacío o sin `activo` | Se intenta guardar `NULL` en `activo`, que es `NOT NULL` |
+| `activo` no booleano (`"false"`, `0`, `"si"`) | PostgreSQL rechaza el tipo |
+
+> Falta validar el cuerpo antes del `UPDATE`. Con un `400` para esos dos casos el endpoint quedaría cerrado.
+
+### 3.6 `GET /api/investigadores/list_activos` ⚠️
+
+Ruta pensada para devolver solo los activos, pero **hoy devuelve lo mismo que `GET /api/investigadores/`**: la vista llama a `services.listar()` y no a `listar_activos()`. El servicio `listar_activos()` existe, pero no está conectado.
+
+### Pendiente en este módulo
+
+- `GET /` y `GET /list_activos` devuelven activos **e inactivos**; falta filtrar.
+- `_a_dict()` devuelve solo `id` y `nombre`: el front no puede saber si un investigador está inactivo.
+- `PATCH` sin un `activo` booleano devuelve `500` en vez de `400`.
+- `GET /searchId` tampoco filtra inactivos.
 
 ---
 
@@ -1094,8 +1142,9 @@ La ruta quedó llamando a `services.get_datos()`, pero la función se renombró 
 | `muestra_humedad` | `UNIQUE (prueba_wbt_id, numero_lenio, numero_medicion)` | No se repite una medición |
 | `muestra_humedad` | `CHECK (humedad_pct BETWEEN 0 AND 100)` | Rechaza valores fuera de rango |
 | `resultado_fase` | `UNIQUE (fase_id)` | Un resultado por fase (nadie lo escribe aún) |
+| `investigador` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica: `PATCH` con `activo=false`. La fila y sus pruebas se conservan |
 
-Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`, pero **no hay endpoint de borrado**.
+Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`. No hay endpoint de borrado físico: en `investigador` el borrado es lógico, y en el resto no existe.
 
 ---
 
@@ -1103,7 +1152,10 @@ Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DEL
 
 | Falta | Consecuencia |
 |---|---|
-| `PUT` / `PATCH` / `DELETE` | No se puede corregir ni borrar un registro; hay que crear otro |
+| `PUT` / `DELETE` | No se puede corregir un registro ni borrarlo físicamente; hay que crear otro. El único `PATCH` es la baja lógica de investigadores |
+| Filtrado de inactivos en investigadores | `GET /` y `GET /list_activos` devuelven todos; el formulario no puede ocultar a un investigador desactivado |
+| `activo` en las respuestas de investigadores | El front no puede saber el estado de cada investigador |
+| Validación del `PATCH` de investigadores | Sin un `activo` booleano responde `500` en vez de `400` |
 | Escritura de `resultado_fase` | Los resultados calculados no se guardan; solo existen en la respuesta de `calcular` |
 | `resultado_prueba` | No hay tabla ni promedios por prueba |
 | Endpoint de emisiones calculadas | `co2_total_g`, `co_total_g` y `pm_total_g` solo se almacenan |
