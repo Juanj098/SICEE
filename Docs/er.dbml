@@ -13,6 +13,7 @@ enum tipo_fase_enum {
 Table investigador {
     id integer [primary key, increment]
     nombre varchar(150) [not null]
+    activo boolean [not null, default: true]
 }
 
 Table laboratorio {

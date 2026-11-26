@@ -22,7 +22,8 @@ CREATE TYPE tipo_fase_enum AS ENUM (
 -- ------------------------------------------------------------
 CREATE TABLE investigador (
     id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nombre  VARCHAR(150) NOT NULL
+    nombre  VARCHAR(150) NOT NULL,
+    activo  BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE laboratorio (

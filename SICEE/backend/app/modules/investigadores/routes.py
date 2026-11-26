@@ -4,9 +4,11 @@ from . import ibp, services
 def _a_dict(investigador):
     return {"id":investigador.id, "nombre": investigador.nombre}
 
+
 @ibp.get("/")
 def listar():
     return [_a_dict(i) for i in services.listar()]
+
 
 @ibp.post("/")
 def crear():
@@ -17,12 +19,14 @@ def crear():
     investigador = services.newInvestigador(nombre)
     return _a_dict(investigador), 201
 
+
 @ibp.get("/<int:id>")
 def getName(id):
     investigador = services.obtener_por_id(id)
     if investigador is None:
         return {"error":"investigador no encontrado"}
     return _a_dict(investigador)
+
 
 @ibp.get("/searchId")
 def getId():
@@ -34,5 +38,18 @@ def getId():
     investigador = services.buscar_por_nombre(nombre)
     if investigador is None:
         return {"error": "Investigador no encontrado"}, 404
-    
     return _a_dict(investigador)
+
+@ibp.get('/list_activos')
+def getActivos():
+    return [_a_dict(i) for i in services.listar_activos()]
+
+@ibp.patch("/<int:id>")
+def updateInv(id):
+    datos = request.get_json(silent=True) or {}
+    activo = datos.get('activo')
+
+    if not services.update_investigador(id, activo):
+        return {'error':'Investigador no encontrado'}, 404
+
+    return {'msg':'Investigador actualizado'}, 200

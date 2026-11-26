@@ -6,14 +6,15 @@ import { useState } from "react";
 
 const MAX_OLLAS = 4;
 
-const FORM_INICIAL = {
+// Se devuelve un objeto nuevo en cada llamada para poder reiniciar el
+// formulario sin compartir arrays entre pruebas.
+const crearFormInicial = () => ({
     prueba: {
         fecha: '',
         numero_repeticion: '',
         investigador_id: '',
         laboratorio_id: '',
         conjunto_pruebas_id: '',
-        condiciones_ambientales_id: '',
         combustible_id: '',
         peso_recipiente_carbon_kg: ''
     },
@@ -25,18 +26,6 @@ const FORM_INICIAL = {
         viento_ms: '',
         condicion_viento: '',
         punto_ebullicion_c: ''
-    },
-    combustible: {
-        tipo: '',
-        tipo_alimentacion: '',
-        longitud_combustible_cm: '',
-        ancho_combustible_cm: '',
-        poder_calorifico_neto_mj_kg: '',
-        poder_calorifico_bruto_mj_kg: '',
-        poder_calorifico_carbon_mj_kg: '',
-        contenido_carbono_pct: '',
-        contenido_carbono_carbon_pct: '',
-        descripcion: ''
     },
     // Ollas de la prueba: peso seco y capacidad se usan en todas las fases.
     ollas: [1, 2].map((numero) => ({
@@ -62,11 +51,11 @@ const FORM_INICIAL = {
         observaciones: '',
         ollas: []
     }))
-}
+})
 
 export default function PruebaWBT(){
 
-    const [form, setForm] = useState(FORM_INICIAL)
+    const [form, setForm] = useState(crearFormInicial)
 
     const actualizar = (seccion, campo, valor) =>
         setForm((f)=>({...f, [seccion]:{...f[seccion], [campo]:valor}}))
