@@ -21,6 +21,7 @@ Table laboratorio {
     institucion varchar(150) [not null]
     direccion varchar(255)
     descripcion varchar(500)
+    activo boolean [not null, default: true]
 }
 
 Table estufa {
@@ -32,6 +33,7 @@ Table estufa {
     numero_hornillas integer
     material varchar(100)
     descripcion varchar(500)
+    activo boolean [not null, default: true]
 }
 
 Table condiciones_ambientales {
@@ -57,6 +59,7 @@ Table combustible {
   tipo_alimentacion varchar(100)
   contenido_carbono_pct decimal(5,2)
   descripcion varchar(500)
+  activo boolean [not null, default: true]
 }
 
 Table fase_prueba {

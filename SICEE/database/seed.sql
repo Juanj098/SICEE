@@ -31,20 +31,20 @@ INSERT INTO investigador (nombre, activo) VALUES
     ('Dra. María González', TRUE),
     ('Ing. Carlos Ramírez', TRUE);
 
-INSERT INTO laboratorio (institucion, direccion, descripcion) VALUES
+INSERT INTO laboratorio (institucion, direccion, descripcion, activo) VALUES
     ('CII - Centro de Investigación e Innovación', 'Quito, Ecuador',
-     'Laboratorio de eficiencia energética'),
+     'Laboratorio de eficiencia energética', TRUE),
     ('Laboratorio de Biomateriales', 'Loja, Ecuador',
-     'Laboratorio de caracterización de biomasa');
+     'Laboratorio de caracterización de biomasa', TRUE);
 
 INSERT INTO estufa
     (marca, fabricante, area_camara_cm2, altura_cm, numero_hornillas,
-     material, descripcion)
+     material, descripcion, activo)
 VALUES
     ('Estufa Rocket A1', 'CII', 625.0000, 45.0000, 1,
-     'Acero inoxidable', 'Estufa de prueba para biomasa'),
+     'Acero inoxidable', 'Estufa de prueba para biomasa', TRUE),
     ('Estufa Rocket B2', 'CII', 900.0000, 50.0000, 2,
-     'Acero al carbono', 'Estufa de mayor capacidad');
+     'Acero al carbono', 'Estufa de mayor capacidad', TRUE);
 
 INSERT INTO condiciones_ambientales
     (temperatura_c, humedad_relativa_pct, altitud_m,
@@ -58,14 +58,14 @@ INSERT INTO combustible
     (tipo, longitud_combustible_cm, ancho_combustible_cm,
      poder_calorifico_neto_mj_kg, poder_calorifico_bruto_mj_kg,
      poder_calorifico_carbon_mj_kg, contenido_carbono_carbon_pct,
-     tipo_alimentacion, contenido_carbono_pct, descripcion)
+     tipo_alimentacion, contenido_carbono_pct, descripcion, activo)
 VALUES
     ('Leña de eucalipto', 30.00, 8.00, 18.500, 19.800,
      28.500, 80.00, 'Manual', 48.50,
-     'Trozos de eucalipto de aproximadamente 30 cm'),
+     'Trozos de eucalipto de aproximadamente 30 cm', TRUE),
     ('Briquetas de aserrín', 10.00, 6.00, 16.800, 18.000,
      25.000, 75.00, 'Manual', 46.00,
-     'Briquetas cilíndricas de aserrín');
+     'Briquetas cilíndricas de aserrín', TRUE);
 
 -- ------------------------------------------------------------
 -- Conjuntos de prueba
