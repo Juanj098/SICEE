@@ -3,11 +3,11 @@ from . import bp, services
 
 @bp.get('/datos/<int:prueba_id>')
 def list_datos(prueba_id):
+    """Devuelve la prueba con sus fases, ollas, mediciones y catálogos."""
     datos = services.get_datos(prueba_id)
     if datos is None:
         return {'error': f'No existe la prueba_wbt con id {prueba_id}'}, 404
     return datos, 200
-
 
 @bp.get('/datos/pruebawbt')
 def get_pruebawbt():
@@ -16,7 +16,16 @@ def get_pruebawbt():
 
 @bp.get('/datos/calcular/<int:prueba_id>')
 def calcular_prueba(prueba_id):
-    datos = services.get_datos(prueba_id)
+    datos = services.calculo_fases(prueba_id)
     if datos is None:
         return {'error': f'No existe la prueba_wbt con id {prueba_id}'}, 404
+    
+    return datos, 200
+
+@bp.get('/datos/list/<int:prueba_id>')
+def listar_prueba(prueba_id):
+    datos = services.get_data(prueba_id)
+    if datos is None:
+        return {'error': f'No existe la prueba_wbt con id {prueba_id}'}, 404
+    
     return datos, 200
