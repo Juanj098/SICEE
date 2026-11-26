@@ -30,7 +30,8 @@ CREATE TABLE laboratorio (
     id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     institucion  VARCHAR(150) NOT NULL,
     direccion    VARCHAR(255),
-    descripcion  VARCHAR(500)
+    descripcion  VARCHAR(500),
+    activo       BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE estufa (
@@ -41,7 +42,8 @@ CREATE TABLE estufa (
     altura_cm        DECIMAL(12,4),
     numero_hornillas INTEGER,
     material         VARCHAR(100),
-    descripcion      VARCHAR(500)
+    descripcion      VARCHAR(500),
+    activo           BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE condiciones_ambientales (
@@ -66,7 +68,8 @@ CREATE TABLE combustible (
     contenido_carbono_carbon_pct DECIMAL(5,2),
     tipo_alimentacion            VARCHAR(100),
     contenido_carbono_pct        DECIMAL(5,2),
-    descripcion                  VARCHAR(500)
+    descripcion                  VARCHAR(500),
+    activo                       BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- ------------------------------------------------------------

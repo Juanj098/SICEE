@@ -6,6 +6,7 @@ import Modal from "./Modal";
 import FormCombustible from "./FormCombustible";
 import FichaCombustible from "./FichaCombustible";
 import {get} from '../../../api/Client'
+import { eliminarCombustible } from "../../../api/Catalogos";
 
 export default function MedicionesGenerales({
   datos,
@@ -51,6 +52,19 @@ export default function MedicionesGenerales({
   const seleccionado = combustibles.find(
     (c) => String(c.id) === String(prueba.combustible_id)
   );
+
+  const alEliminarCombustible = async (id) => {
+    if (!id) return;
+    try {
+      await eliminarCombustible(id);
+      setCombustibles((lista) => lista.filter((c) => String(c.id) !== String(id)));
+      if (String(prueba.combustible_id) === String(id)) {
+        onCambiarPrueba("combustible_id", "");
+      }
+    } catch (err) {
+      setErrorLista(err.message);
+    }
+  };
 
   const manejarCondiciones = (e) =>
     onCambiarCondiciones(e.target.name, e.target.value);
@@ -140,6 +154,7 @@ export default function MedicionesGenerales({
             value={prueba.combustible_id}
             onChange={manejarPrueba}
             onNuevo={() => setModal(true)}
+            onEliminar={alEliminarCombustible}
           />
         </Subseccion>
         <FichaCombustible combustible={seleccionado} />

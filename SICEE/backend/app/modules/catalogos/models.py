@@ -8,6 +8,7 @@ class Laboratorio(db.Model):
     institucion = db.Column(db.String(150), nullable=False)
     direccion = db.Column(db.String(255))
     descripcion = db.Column(db.String(500))
+    activo = db.Column(db.Boolean, nullable=False, default=True, server_default=db.text('true'))
 
     pruebas_wbt = db.relationship("PruebaWBT", back_populates="laboratorio")
 
@@ -23,6 +24,7 @@ class Estufas(db.Model):
     numero_hornillas = db.Column(db.Integer)
     material = db.Column(db.String(100))
     descripcion = db.Column(db.String(500))
+    activo = db.Column(db.Boolean, nullable=False, default=True, server_default=db.text('true'))
 
     conjunto_pruebas = db.relationship(
         "ConjuntoPruebas",
@@ -44,5 +46,6 @@ class Combustibles(db.Model):
     tipo_alimentacion = db.Column(db.String(100))
     contenido_carbono_pct = db.Column(db.Numeric(5, 2))
     descripcion = db.Column(db.String(500))
+    activo = db.Column(db.Boolean, nullable=False, default=True, server_default=db.text('true'))
 
     pruebas_wbt = db.relationship("PruebaWBT", back_populates="combustible")

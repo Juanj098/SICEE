@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from flask import request
 from . import bp, services
+from .models import Combustibles, Estufas, Laboratorio
 
 
 def _json_value(valor):
@@ -100,3 +101,39 @@ def newLabs():
         return {'error':'falta nombre institucion'}
     lab = services.newLab(institucion, direccion, descripcion)
     return _a_dict(lab), 201
+
+# /-------Baja lógica-------/
+def _activo_del_cuerpo():
+    datos = request.get_json(silent=True) or {}
+    activo = datos.get('activo')
+    return activo if isinstance(activo, bool) else None
+
+
+@bp.patch('/combustible/<int:id>')
+def updateCombustible(id):
+    activo = _activo_del_cuerpo()
+    if activo is None:
+        return {'error': 'El campo activo debe ser booleano'}, 400
+    if not services.cambiar_activo(Combustibles, id, activo):
+        return {'error': 'Combustible no encontrado'}, 404
+    return {'msg': 'Combustible actualizado'}, 200
+
+
+@bp.patch('/estufas/<int:id>')
+def updateEstufa(id):
+    activo = _activo_del_cuerpo()
+    if activo is None:
+        return {'error': 'El campo activo debe ser booleano'}, 400
+    if not services.cambiar_activo(Estufas, id, activo):
+        return {'error': 'Estufa no encontrada'}, 404
+    return {'msg': 'Estufa actualizada'}, 200
+
+
+@bp.patch('/labs/<int:id>')
+def updateLab(id):
+    activo = _activo_del_cuerpo()
+    if activo is None:
+        return {'error': 'El campo activo debe ser booleano'}, 400
+    if not services.cambiar_activo(Laboratorio, id, activo):
+        return {'error': 'Laboratorio no encontrado'}, 404
+    return {'msg': 'Laboratorio actualizado'}, 200

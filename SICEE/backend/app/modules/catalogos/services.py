@@ -1,10 +1,11 @@
 from app.extensions import db
+from sqlalchemy import update
 from .models import Combustibles, Estufas, Laboratorio
 
 
 # /---Combustibles---/
 def listar_combustible():
-    return Combustibles.query.all()
+    return Combustibles.query.filter_by(activo=True).all()
 
 
 def crear_combustible(
@@ -38,7 +39,7 @@ def crear_combustible(
 
 # /------Estufa------/
 def listar_estufas():
-    return Estufas.query.all()
+    return Estufas.query.filter_by(activo=True).all()
 
 
 def newEstufa(marca, fabricante, area_camara_cm2, altura_cm, numero_hornillas, material, descripcion):
@@ -58,7 +59,7 @@ def newEstufa(marca, fabricante, area_camara_cm2, altura_cm, numero_hornillas, m
 
 # /-------Labs-------/
 def listar_labs():
-    return Laboratorio.query.all()
+    return Laboratorio.query.filter_by(activo=True).all()
 
 
 def newLab(institucion, direccion, descripcion):
@@ -70,3 +71,18 @@ def newLab(institucion, direccion, descripcion):
     db.session.add(laboratorio)
     db.session.commit()
     return laboratorio
+
+
+# /-------Baja lógica-------/
+def cambiar_activo(modelo, id_, activo):
+    """Activa o desactiva un registro del catálogo sin borrarlo."""
+    stmt = (
+        update(modelo)
+        .where(modelo.id == id_)
+        .values(activo=activo)
+        .execution_options(synchronize_session=False)
+    )
+    resultado = db.session.execute(stmt)
+    db.session.commit()
+    return resultado.rowcount > 0
+

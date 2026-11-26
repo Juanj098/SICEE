@@ -18,7 +18,7 @@
 | Fechas | Se aceptan en ISO 8601: `2026-11-02`, `2026-11-02T08:00`, `2026-11-02T08:00:00` |
 | Cadenas vacías | Un `""` se guarda como `NULL`. Las cadenas se recortan (`strip`) antes de guardar. |
 | Nulos | Los campos opcionales se devuelven como `null` |
-| Métodos | `GET` y `POST` en todos los módulos; `PATCH` solo en `investigadores` (baja lógica). No hay `PUT` ni `DELETE`. |
+| Métodos | `GET` y `POST` en todos los módulos; `PATCH` en `investigadores` y en los tres catálogos (baja lógica). No hay `PUT` ni `DELETE`. |
 | Prefijos | `/api/investigadores`, `/api/catalogos`, `/api/pruebas`, `/api/calculos` |
 
 ### Formato de error
@@ -56,34 +56,37 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 5 | GET | `/api/investigadores/<id>` | Un investigador |
 | 6 | GET | `/api/investigadores/searchId` | Investigador por nombre |
 | 7 | PATCH | `/api/investigadores/<id>` | Investigador activado o desactivado |
-| 8 | GET | `/api/investigadores/list_activos` | ⚠️ Igual que `GET /`: todavía no filtra |
-| 9 | GET | `/api/catalogos/combustible` | Lista de combustibles |
-| 10 | POST | `/api/catalogos/combustible` | Combustible creado |
-| 11 | GET | `/api/catalogos/estufas` | Lista de estufas |
-| 12 | POST | `/api/catalogos/estufas` | Estufa creada |
-| 13 | GET | `/api/catalogos/labs` | Lista de laboratorios |
-| 14 | POST | `/api/catalogos/labs` | Laboratorio creado |
-| 15 | GET | `/api/pruebas/condiciones_ambientales` | Lista de condiciones |
-| 16 | POST | `/api/pruebas/condiciones_ambientales` | Condiciones creadas |
-| 17 | GET | `/api/pruebas/conjunto_pruebas` | Lista de conjuntos |
-| 18 | POST | `/api/pruebas/conjunto_pruebas` | Conjunto creado |
-| 19 | GET | `/api/pruebas/pruebas_wbt` | Lista de pruebas |
-| 20 | POST | `/api/pruebas/pruebas_wbt` | Prueba creada |
-| 21 | GET | `/api/pruebas/Fase_Prueba` | Lista de fases |
-| 22 | POST | `/api/pruebas/Fase_Prueba` | Fase creada |
-| 23 | GET | `/api/pruebas/ollas` | Lista de ollas |
-| 24 | POST | `/api/pruebas/ollas` | Olla creada |
-| 25 | GET | `/api/pruebas/olla_fase` | Lista de ollas por fase |
-| 26 | POST | `/api/pruebas/olla_fase` | Olla por fase creada |
-| 27 | GET | `/api/pruebas/mediciones_opcionales` | Lista de mediciones |
-| 28 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
-| 29 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
-| 30 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
-| 31 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
-| 32 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
-| 33 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
-| 34 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
-| 35 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
+| 8 | GET | `/api/investigadores/list_activos` | Solo investigadores activos |
+| 9 | PATCH | `/api/catalogos/combustible/<id>` | Combustible activado o desactivado |
+| 10 | PATCH | `/api/catalogos/estufas/<id>` | Estufa activada o desactivada |
+| 11 | PATCH | `/api/catalogos/labs/<id>` | Laboratorio activado o desactivado |
+| 12 | GET | `/api/catalogos/combustible` | Lista de combustibles activos |
+| 13 | POST | `/api/catalogos/combustible` | Combustible creado |
+| 14 | GET | `/api/catalogos/estufas` | Lista de estufas activas |
+| 15 | POST | `/api/catalogos/estufas` | Estufa creada |
+| 16 | GET | `/api/catalogos/labs` | Lista de laboratorios activos |
+| 17 | POST | `/api/catalogos/labs` | Laboratorio creado |
+| 18 | GET | `/api/pruebas/condiciones_ambientales` | Lista de condiciones |
+| 19 | POST | `/api/pruebas/condiciones_ambientales` | Condiciones creadas |
+| 20 | GET | `/api/pruebas/conjunto_pruebas` | Lista de conjuntos |
+| 21 | POST | `/api/pruebas/conjunto_pruebas` | Conjunto creado |
+| 22 | GET | `/api/pruebas/pruebas_wbt` | Lista de pruebas |
+| 23 | POST | `/api/pruebas/pruebas_wbt` | Prueba creada |
+| 24 | GET | `/api/pruebas/Fase_Prueba` | Lista de fases |
+| 25 | POST | `/api/pruebas/Fase_Prueba` | Fase creada |
+| 26 | GET | `/api/pruebas/ollas` | Lista de ollas |
+| 27 | POST | `/api/pruebas/ollas` | Olla creada |
+| 28 | GET | `/api/pruebas/olla_fase` | Lista de ollas por fase |
+| 29 | POST | `/api/pruebas/olla_fase` | Olla por fase creada |
+| 30 | GET | `/api/pruebas/mediciones_opcionales` | Lista de mediciones |
+| 31 | POST | `/api/pruebas/mediciones_opcionales` | Medición creada |
+| 32 | GET | `/api/pruebas/muestras_humedad` | Lista de mediciones de humedad |
+| 33 | POST | `/api/pruebas/muestras_humedad` | Humedad de la prueba guardada |
+| 34 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
+| 35 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
+| 36 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
+| 37 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
+| 38 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
 
 ---
 
@@ -258,6 +261,8 @@ Prefijo: `/api/catalogos`
 
 > En este módulo los números **no admiten `null`**: si se omiten, se guardan como `0.00`.
 
+> Los tres catálogos tienen **baja lógica** (`activo`). Los `GET` devuelven solo los registros activos, y cada objeto incluye el campo `activo`. El borrado físico no existe: `conjunto_pruebas.estufa_id` y `prueba_wbt.laboratorio_id` / `combustible_id` no tienen `ON DELETE`.
+
 ### 4.1 `GET /api/catalogos/combustible`
 
 **Respuesta `200`**
@@ -275,7 +280,8 @@ Prefijo: `/api/catalogos`
     "contenido_carbono_carbon_pct": 80.0,
     "tipo_alimentacion": "Manual",
     "contenido_carbono_pct": 48.5,
-    "descripcion": "Trozos de eucalipto de aproximadamente 30 cm"
+    "descripcion": "Trozos de eucalipto de aproximadamente 30 cm",
+    "activo": true
   }
 ]
 ```
@@ -335,7 +341,8 @@ Prefijo: `/api/catalogos`
     "altura_cm": 45.0,
     "numero_hornillas": 1,
     "material": "Acero inoxidable",
-    "descripcion": "Estufa de prueba para biomasa"
+    "descripcion": "Estufa de prueba para biomasa",
+    "activo": true
   }
 ]
 ```
@@ -380,7 +387,8 @@ Prefijo: `/api/catalogos`
     "id": 1,
     "institucion": "CII - Centro de Investigación e Innovación",
     "direccion": "Quito, Ecuador",
-    "descripcion": "Laboratorio de eficiencia energética"
+    "descripcion": "Laboratorio de eficiencia energética",
+    "activo": true
   }
 ]
 ```
@@ -406,6 +414,37 @@ Prefijo: `/api/catalogos`
 **Respuesta `201`:** el objeto completo.
 
 **Error:** si falta `institucion`, devuelve `200` con `{ "error": "falta nombre institucion" }`.
+
+### 4.7 `PATCH /api/catalogos/combustible/<id>` · `PATCH /api/catalogos/estufas/<id>` · `PATCH /api/catalogos/labs/<id>`
+
+Baja lógica de un catálogo. No borra la fila: las pruebas y conjuntos que la referencian siguen intactos. El registro desaparece de los `GET` del módulo.
+
+**Cuerpo**
+
+| Campo | Tipo | Obligatorio | Notas |
+|---|---|---|---|
+| `activo` | bool | **Sí** | `false` desactiva, `true` reactiva |
+
+```json
+{ "activo": false }
+```
+
+**Respuesta `200`**
+
+```json
+{ "msg": "Laboratorio actualizado" }
+```
+
+El mensaje cambia según el catálogo: `"Combustible actualizado"`, `"Estufa actualizada"`, `"Laboratorio actualizado"`.
+
+**Errores**
+
+| Caso | Código | Cuerpo |
+|---|---|---|
+| Cuerpo sin `activo` o con un valor que no es booleano | `400` | `{ "error": "El campo activo debe ser booleano" }` |
+| El id no existe | `404` | `{ "error": "Laboratorio no encontrado" }` |
+
+> La lista de estufas del formulario no se alimenta de `GET /catalogos/estufas` directamente: la prueba guarda `conjunto_pruebas_id`, así que el front cruza `GET /pruebas/conjunto_prueba` con `GET /catalogos/estufas` para mostrar la marca. Al desactivar una estufa, todos sus conjuntos dejan de ofrecerse.
 
 ---
 
@@ -1143,8 +1182,11 @@ La ruta quedó llamando a `services.get_datos()`, pero la función se renombró 
 | `muestra_humedad` | `CHECK (humedad_pct BETWEEN 0 AND 100)` | Rechaza valores fuera de rango |
 | `resultado_fase` | `UNIQUE (fase_id)` | Un resultado por fase (nadie lo escribe aún) |
 | `investigador` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica: `PATCH` con `activo=false`. La fila y sus pruebas se conservan |
+| `laboratorio` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. El `GET` del catálogo omite los inactivos |
+| `estufa` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. Al desactivarla, sus `conjunto_pruebas` dejan de ofrecerse |
+| `combustible` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. El `GET` del catálogo omite los inactivos |
 
-Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`. No hay endpoint de borrado físico: en `investigador` el borrado es lógico, y en el resto no existe.
+Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`. No hay endpoint de borrado físico: en `investigador`, `laboratorio`, `estufa` y `combustible` el borrado es lógico, y en el resto no existe.
 
 ---
 
@@ -1152,8 +1194,8 @@ Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DEL
 
 | Falta | Consecuencia |
 |---|---|
-| `PUT` / `DELETE` | No se puede corregir un registro ni borrarlo físicamente; hay que crear otro. El único `PATCH` es la baja lógica de investigadores |
-| Filtrado de inactivos en investigadores | `GET /` y `GET /list_activos` devuelven todos; el formulario no puede ocultar a un investigador desactivado |
+| `PUT` / `DELETE` | No se puede corregir un registro ni borrarlo físicamente; hay que crear otro. Los `PATCH` existentes son solo baja lógica (investigadores y catálogos) |
+| Filtrado de inactivos en investigadores | `GET /` devuelve activos e inactivos; `GET /list_activos` sí filtra. El formulario usa el segundo |
 | `activo` en las respuestas de investigadores | El front no puede saber el estado de cada investigador |
 | Validación del `PATCH` de investigadores | Sin un `activo` booleano responde `500` en vez de `400` |
 | Escritura de `resultado_fase` | Los resultados calculados no se guardan; solo existen en la respuesta de `calcular` |

@@ -19,12 +19,18 @@ async function enviar(ruta, datos, mensajeError) {
 }
 
 
-export const listActivos =()=> get('/investigadores/list_activos')
+export const listActivos = () => get('/investigadores/list_activos')
+export const listLabs = () => get('/catalogos/labs')
+export const listEstufas = () => get('/catalogos/estufas')
+export const listConjuntos = () => get('/pruebas/conjunto_pruebas')
 export const crearInvestigador = (datos) => post('/investigadores/', datos)
 export const crearLaboratorio = (datos) => post('/catalogos/labs', datos)
 export const crearEstufa = (datos) => post('/catalogos/estufas', datos)
 export const crearCombustible = (datos) => post('/catalogos/combustible', datos)
 export const eliminatInvestigador = (id) => patch(`/investigadores/${id}`, {activo:false})
+export const eliminarLaboratorio = (id) => patch(`/catalogos/labs/${id}`, {activo:false})
+export const eliminarEstufa = (id) => patch(`/catalogos/estufas/${id}`, {activo:false})
+export const eliminarCombustible = (id) => patch(`/catalogos/combustible/${id}`, {activo:false})
 
 
 
