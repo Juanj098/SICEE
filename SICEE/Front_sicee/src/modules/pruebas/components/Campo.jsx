@@ -13,7 +13,7 @@ export function Campo({ label, ...props }) {
   );
 }
 
-export function Selector({ label, opciones, onNuevo, onEliminar, ...props }) {
+export function Selector({ label, opciones, onNuevo, textoNuevo = "+ Nuevo", onEliminar, ...props }) {
   const [abierto, setAbierto] = useState(false);
   const contenedor = useRef(null);
 
@@ -148,7 +148,7 @@ export function Selector({ label, opciones, onNuevo, onEliminar, ...props }) {
                        hover:bg-[#0b5a42] focus-visible:outline-none focus-visible:ring-2
                        focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2"
           >
-            + Nuevo
+            {textoNuevo}
           </button>
         )}
       </div>

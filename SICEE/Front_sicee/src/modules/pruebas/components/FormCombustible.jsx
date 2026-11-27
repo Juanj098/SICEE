@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Campo } from "./Campo";
-import { crearCombustible } from "../../../api/Catalogos";
+import { useEffect, useState } from "react";
+import { Campo, Selector } from "./Campo";
+import { crearCombustible, listEspeciesActivas } from "../../../api/Catalogos";
 
 const VALORES_INICIALES = {
   tipo: "",
+  especie_id: "",
   tipo_alimentacion: "",
   longitud_combustible_cm: "",
   ancho_combustible_cm: "",
@@ -15,13 +16,35 @@ const VALORES_INICIALES = {
   descripcion: "",
 };
 
-// El backend guarda 0.00 cuando el número no se envía; se manda null en ese caso.
 const numero = (valor) => (valor === "" ? null : Number(valor));
 
 export default function FormCombustible({ onGuardado, onCancelar }) {
   const [valores, setValores] = useState(VALORES_INICIALES);
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [especies, setEspecies] = useState([]);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
+
+  useEffect(() => {
+    let vigente = true;
+    listEspeciesActivas()
+      .then((lista) => { if (vigente) setEspecies(lista); })
+      .catch((err) => { if (vigente) setErrorCatalogo(err.message); });
+    return () => { vigente = false; };
+  }, []);
+
+  const elegirEspecie = ({ target: { value } }) => {
+    if (value === valores.especie_id) return;
+    const especie = especies.find((item) => String(item.id) === value);
+    setValores((v) => ({
+      ...v,
+      especie_id: value,
+      poder_calorifico_neto_mj_kg: especie?.poder_calorifico_neto_mj_kg ?? "",
+      poder_calorifico_bruto_mj_kg: especie?.poder_calorifico_bruto_mj_kg ?? "",
+      poder_calorifico_carbon_mj_kg: especie?.poder_calorifico_carbon_mj_kg ?? "",
+      contenido_carbono_pct: especie?.contenido_carbono_pct ?? "",
+    }));
+  };
 
   const cambiar = (e) =>
     setValores((v) => ({ ...v, [e.target.name]: e.target.value }));
@@ -45,6 +68,7 @@ export default function FormCombustible({ onGuardado, onCancelar }) {
     try {
       const nuevo = await crearCombustible({
         tipo: valores.tipo,
+        especie_id: numero(valores.especie_id),
         tipo_alimentacion: valores.tipo_alimentacion,
         longitud_combustible_cm: numero(valores.longitud_combustible_cm),
         ancho_combustible_cm: numero(valores.ancho_combustible_cm),
@@ -65,6 +89,20 @@ export default function FormCombustible({ onGuardado, onCancelar }) {
 
   return (
     <form onSubmit={enviar} className="space-y-4">
+      <Selector
+        label="Especie y fuente de referencia"
+        name="especie_id"
+        value={valores.especie_id}
+        opciones={[
+          { id: "", texto: "Sin especie (ingreso manual)" },
+          ...especies.map((e) => ({
+            id: e.id,
+            texto: `${e.especie} — ${e.fuente ?? (e.fuente_codigo == null ? "Sin fuente" : `Fuente ${e.fuente_codigo}`)}`,
+          })),
+        ]}
+        onChange={elegirEspecie}
+      />
+      {errorCatalogo && <p role="alert">No se pudo cargar el catálogo de especies: {errorCatalogo}. Puedes ingresar el lote manualmente.</p>}
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo
           label="Tipo de combustible"

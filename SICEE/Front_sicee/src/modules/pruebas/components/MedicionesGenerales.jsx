@@ -5,8 +5,7 @@ import { Campo, Selector } from "./Campo";
 import Modal from "./Modal";
 import FormCombustible from "./FormCombustible";
 import FichaCombustible from "./FichaCombustible";
-import {get} from '../../../api/Client'
-import { eliminarCombustible } from "../../../api/Catalogos";
+import { eliminarCombustible, listCombusiblesA } from "../../../api/Catalogos";
 
 export default function MedicionesGenerales({
   datos,
@@ -34,19 +33,9 @@ export default function MedicionesGenerales({
   const [errorLista, setErrorLista] = useState("");
 
   useEffect(() => {
-    let activo = true;
-    get("/catalogos/combustible")
-      .then((lista) => {
-        if (!activo) return;
-        setCombustibles(lista.map((c) => ({ ...c, texto: c.tipo })));
-        setErrorLista("");
-      })
-      .catch((err) => {
-        if (activo) setErrorLista(err.message);
-      });
-    return () => {
-      activo = false;
-    };
+    listCombusiblesA()
+    .then((lista)=>setCombustibles(lista.map((i)=>({...i, texto: i.tipo}))))
+    .catch((e)=>setErrorLista(e.message))
   }, []);
 
   const seleccionado = combustibles.find(

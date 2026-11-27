@@ -1,8 +1,9 @@
 
 // --------------SICEE--------------
-// Nota: emisiones_prueba, resultado_emisiones_fase y resultado_prueba están
-// modeladas aquí pero todavía no se crean en database/init.sql (módulo de
-// emisiones y promedios pendiente).
+// Nota: emisiones_prueba y resultado_emisiones_fase están modeladas aquí
+// pero todavía no se crean en database/init.sql (módulo de emisiones
+// pendiente). resultado_prueba sí se crea; sus columnas de emisiones
+// quedan en NULL hasta que exista ese módulo.
 
 enum tipo_fase_enum {
   inicio_frio     [note: 'Inicio frío, alta potencia']
@@ -47,9 +48,43 @@ Table condiciones_ambientales {
     punto_ebullicion_c decimal(6,2)
 }
 
+Table iwa_umbral {
+  version integer [not null]
+  metrica varchar(64) [not null]
+  mayor_es_mejor boolean [not null]
+  t1 numeric [not null]
+  t2 numeric [not null]
+  t3 numeric [not null]
+  t4 numeric [not null]
+  indexes {
+    (version, metrica) [pk]
+  }
+  Note: 'Umbrales inclusivos por métrica. T0 si el promedio no alcanza T1.'
+}
+
+Table especie_madera {
+  id integer [primary key, increment]
+  especie varchar(100) [not null]
+  nombres_comunes varchar(500)
+  poder_calorifico_bruto_mj_kg decimal(8,3)
+  poder_calorifico_neto_mj_kg decimal(8,3)
+  poder_calorifico_carbon_mj_kg decimal(8,3)
+  contenido_carbono_pct decimal(5,2)
+  fuente_codigo integer [note: 'Se permite una sola referencia sin código por especie (UNIQUE NULLS NOT DISTINCT).']
+  fuente varchar(500)
+  activo boolean [not null, default: true]
+
+  indexes {
+    (especie, fuente_codigo) [unique, name: 'uq_especie_madera_especie_fuente']
+  }
+
+  Note: 'Catálogo de referencia de especies de madera. El lote de combustible guarda una copia de los valores usados en la prueba.'
+}
+
 Table combustible {
   id integer [primary key, increment]
   tipo varchar(100) [not null]
+  especie_id integer [ref: > especie_madera.id]
   longitud_combustible_cm decimal(8,2)
   ancho_combustible_cm decimal(8,2)
   poder_calorifico_neto_mj_kg decimal(8,3)

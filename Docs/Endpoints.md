@@ -62,6 +62,10 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 11 | PATCH | `/api/catalogos/labs/<id>` | Laboratorio activado o desactivado |
 | 12 | GET | `/api/catalogos/combustible` | Lista de combustibles activos |
 | 13 | POST | `/api/catalogos/combustible` | Combustible creado |
+| 13a | GET | `/api/catalogos/especies` | Lista de especies (incluye inactivas) |
+| 13b | GET | `/api/catalogos/especies/activos` | Lista de especies activas |
+| 13c | POST | `/api/catalogos/especies` | Especie creada |
+| 13d | PATCH | `/api/catalogos/especies/<id>` | Especie activada o desactivada |
 | 14 | GET | `/api/catalogos/estufas` | Lista de estufas activas |
 | 15 | POST | `/api/catalogos/estufas` | Estufa creada |
 | 16 | GET | `/api/catalogos/labs` | Lista de laboratorios activos |
@@ -85,7 +89,9 @@ Los errores de base de datos (clave duplicada, llave foránea inexistente) tambi
 | 34 | POST | `/api/pruebas/completa` | Prueba completa guardada en una sola transacción |
 | 35 | GET | `/api/calculos/datos/pruebawbt` | ¿Existe la tabla `prueba_wbt`? |
 | 36 | GET | `/api/calculos/datos/list/<prueba_id>` | Prueba completa con fases y ollas |
-| 37 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados calculados en memoria |
+| 37 | GET | `/api/calculos/datos/calcular/<prueba_id>` | Resultados de la prueba: lee `resultado_fase` o calcula si faltan |
+| 37a | GET | `/api/calculos/pruebas/<prueba_id>/resultado` | Métricas IWA y valores de referencia de la prueba |
+| 37b | GET | `/api/calculos/conjuntos/<conjunto_id>/iwa` | Promedio, número de datos y nivel IWA por métrica del conjunto |
 | 38 | GET | `/api/calculos/datos/<prueba_id>` | ⚠️ Roto: devuelve 500 (ver 6.4) |
 
 ---
@@ -259,9 +265,9 @@ Ruta pensada para devolver solo los activos, pero **hoy devuelve lo mismo que `G
 
 Prefijo: `/api/catalogos`
 
-> En este módulo los números **no admiten `null`**: si se omiten, se guardan como `0.00`.
+> Los valores numéricos opcionales de una especie pueden ser `null`. Para un lote sin especie se conserva el valor por defecto `0` de los campos numéricos.
 
-> Los tres catálogos tienen **baja lógica** (`activo`). Los `GET` devuelven solo los registros activos, y cada objeto incluye el campo `activo`. El borrado físico no existe: `conjunto_pruebas.estufa_id` y `prueba_wbt.laboratorio_id` / `combustible_id` no tienen `ON DELETE`.
+> Los catálogos tienen **baja lógica** (`activo`). Las listas del formulario filtran los registros activos; `GET /api/catalogos/especies` incluye también las referencias inactivas.
 
 ### 4.1 `GET /api/catalogos/combustible`
 
@@ -272,6 +278,9 @@ Prefijo: `/api/catalogos`
   {
     "id": 1,
     "tipo": "Leña de eucalipto",
+    "especie_id": 43,
+    "especie": "Eucalyptus Globulus",
+    "fuente": "NAS (1980). Firewood Crops",
     "longitud_combustible_cm": 30.0,
     "ancho_combustible_cm": 8.0,
     "poder_calorifico_neto_mj_kg": 18.5,
@@ -293,6 +302,7 @@ Prefijo: `/api/catalogos`
 | Campo | Tipo | Obligatorio | Por defecto |
 |---|---|---|---|
 | `tipo` | string | **Sí** | — |
+| `especie_id` | integer | No | `null`; si se envía, el lote copia los poderes caloríficos de la especie |
 | `longitud_combustible_cm` | number | No | `0.00` |
 | `ancho_combustible_cm` | number | No | `0.00` |
 | `poder_calorifico_neto_mj_kg` | number | No | `0.00` |
@@ -326,6 +336,9 @@ Prefijo: `/api/catalogos`
 |---|---|---|
 | Sin `tipo` | `400` | `{ "error": "El tipo de combustible es obligatorio" }` |
 | Número inválido | `400` | `{ "error": "Datos inválidos: could not convert string to float: 'abc'" }` |
+| `especie_id` inexistente | `400` | `{ "error": "No existe la especie con id 9999" }` |
+
+> Si se envía `especie_id`, debe corresponder a una referencia activa (`400` en caso contrario). Para cada uno de los tres poderes caloríficos y el carbono de la madera, el lote copia el valor de referencia solo cuando el campo se omite, es `null` o está vacío. Un `0` explícito se conserva. La ficha muestra los valores del lote y conserva el vínculo con la especie y su fuente aunque después se desactive.
 
 ### 4.3 `GET /api/catalogos/estufas`
 
@@ -415,7 +428,7 @@ Prefijo: `/api/catalogos`
 
 **Error:** si falta `institucion`, devuelve `200` con `{ "error": "falta nombre institucion" }`.
 
-### 4.7 `PATCH /api/catalogos/combustible/<id>` · `PATCH /api/catalogos/estufas/<id>` · `PATCH /api/catalogos/labs/<id>`
+### 4.7 `PATCH /api/catalogos/combustible/<id>` · `PATCH /api/catalogos/estufas/<id>` · `PATCH /api/catalogos/labs/<id>` · `PATCH /api/catalogos/especies/<id>`
 
 Baja lógica de un catálogo. No borra la fila: las pruebas y conjuntos que la referencian siguen intactos. El registro desaparece de los `GET` del módulo.
 
@@ -435,7 +448,7 @@ Baja lógica de un catálogo. No borra la fila: las pruebas y conjuntos que la r
 { "msg": "Laboratorio actualizado" }
 ```
 
-El mensaje cambia según el catálogo: `"Combustible actualizado"`, `"Estufa actualizada"`, `"Laboratorio actualizado"`.
+El mensaje cambia según el catálogo: `"Combustible actualizado"`, `"Estufa actualizada"`, `"Laboratorio actualizado"`, `"Especie actualizada"`.
 
 **Errores**
 
@@ -444,7 +457,73 @@ El mensaje cambia según el catálogo: `"Combustible actualizado"`, `"Estufa act
 | Cuerpo sin `activo` o con un valor que no es booleano | `400` | `{ "error": "El campo activo debe ser booleano" }` |
 | El id no existe | `404` | `{ "error": "Laboratorio no encontrado" }` |
 
-> La lista de estufas del formulario no se alimenta de `GET /catalogos/estufas` directamente: la prueba guarda `conjunto_pruebas_id`, así que el front cruza `GET /pruebas/conjunto_prueba` con `GET /catalogos/estufas` para mostrar la marca. Al desactivar una estufa, todos sus conjuntos dejan de ofrecerse.
+> En el formulario se elige primero una estufa activa y luego uno de sus conjuntos, o se crea uno con una descripción. El código visible se deriva del ID (`12` → `CON-0012`); la prueba guarda `conjunto_pruebas_id`. Las repeticiones de la misma serie usan el mismo código. Una estufa desactivada y sus conjuntos dejan de ofrecerse.
+
+### 4.8 `GET /api/catalogos/especies` · `GET /api/catalogos/especies/activos`
+
+Catálogo de referencia de especies de madera. Aporta los poderes caloríficos y el contenido de carbono de la especie. Para una base existente, aplicar la [migración](../SICEE/database/migrations/especie_madera.sql); para una nueva, `init.sql` ya incluye la tabla. Desde `SICEE/backend`, ejecutar `.venv/bin/python ../database/import_especies.py` para cargar las 79 referencias (78 nombres distintos). Se puede repetir la importación sin duplicar referencias ni reactivar las dadas de baja.
+
+- `/especies` devuelve **todas**, incluidas las inactivas.
+- `/especies/activos` devuelve solo `activo = true`; es el que debe usar el formulario de combustible.
+
+**Respuesta `200`**
+
+```json
+[
+  {
+    "id": 43,
+    "especie": "Eucalyptus Globulus",
+    "nombres_comunes": "Southern Blue Gum, Fever Tree",
+    "poder_calorifico_bruto_mj_kg": 20.16,
+    "poder_calorifico_neto_mj_kg": 18.84,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops",
+    "activo": true
+  }
+]
+```
+
+### 4.9 `POST /api/catalogos/especies`
+
+**Cuerpo**
+
+| Campo | Tipo | Obligatorio | Por defecto |
+|---|---|---|---|
+| `especie` | string | **Sí** | — |
+| `nombres_comunes` | string | No | `null` |
+| `poder_calorifico_bruto_mj_kg` | number | No | `null` |
+| `poder_calorifico_neto_mj_kg` | number | No | `null` |
+| `poder_calorifico_carbon_mj_kg` | number | No | `null` |
+| `contenido_carbono_pct` | number | No | `null` |
+| `fuente_codigo` | integer | No | `null` |
+| `fuente` | string | No | `null` |
+
+```json
+{
+  "especie": "Eucalyptus Globulus",
+  "nombres_comunes": "Southern Blue Gum, Fever Tree",
+  "poder_calorifico_bruto_mj_kg": 20.16,
+  "poder_calorifico_neto_mj_kg": 18.84,
+  "poder_calorifico_carbon_mj_kg": 29.5,
+  "contenido_carbono_pct": 50.0,
+  "fuente_codigo": 1,
+  "fuente": "NAS (1980). Firewood Crops"
+}
+```
+
+**Respuesta `201`:** el objeto completo, igual que en el `GET`.
+
+**Errores**
+
+| Caso | Código | Cuerpo |
+|---|---|---|
+| Sin `especie` | `400` | `{ "error": "El nombre de la especie es obligatorio" }` |
+| Ya existe `(especie, fuente_codigo)`, incluso si el código es `null` | `400` | `{ "error": "Datos inválidos: Ya existe una especie con ese nombre y fuente" }` |
+| Número inválido | `400` | `{ "error": "Datos inválidos: ..." }` |
+
+> La unicidad es `(especie, fuente_codigo)`. La misma especie puede repetirse con otra fuente (por ejemplo, `Alnus Rubra` de NAS y de Cheremisinoff), porque los valores difieren según la referencia.
 
 ---
 
@@ -929,13 +1008,15 @@ Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formular
 | Campo | Tipo | Obligatorio | Notas |
 |---|---|---|---|
 | `prueba` | object | **Sí** | Datos de `prueba_wbt` |
-| `prueba.fecha` | ISO 8601 | No | `YYYY-MM-DDTHH:MM:SS` |
+| `prueba.fecha` | ISO 8601 | **Sí** | `YYYY-MM-DDTHH:MM:SS` |
 | `prueba.investigador_id` | int | **Sí** | Debe existir |
 | `prueba.laboratorio_id` | int | **Sí** | Debe existir |
 | `prueba.combustible_id` | int | **Sí** | Debe existir |
 | `prueba.conjunto_pruebas_id` | int | **Sí** | Debe existir |
 | `prueba.peso_recipiente_carbon_kg` | number | No | Peso del recipiente vacío |
-| `prueba.numero_repeticion` | int | No | Por defecto `1`; único por conjunto |
+| `prueba.numero_repeticion` | int | No | Omitido o `null`: se asigna el mayor número del conjunto más uno (`1` si está vacío). También se admite indicar un número único por conjunto. |
+| `prueba.es_valida` | bool | No | `true`; si `false`, debe explicar `motivo_invalidez` |
+| `prueba.motivo_invalidez` | string | Condicional | Obligatorio cuando `es_valida` es `false` |
 | `prueba.observaciones` | string | No | |
 | `condiciones` | object | **Sí** | Se crea junto con la prueba |
 | `muestras` | array | **Sí** | Al menos una; normalmente 9 |
@@ -944,13 +1025,13 @@ Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formular
 | `muestras[].humedad_pct` | number | **Sí** | Entre 0 y 100 |
 | `ollas` | array | **Sí** | Al menos una; 1–4 en el protocolo |
 | `ollas[].numero_olla` | int | **Sí** | Mayor o igual a 1, sin repetir |
-| `ollas[].peso_seco_kg` | number | No | |
-| `ollas[].capacidad_l` | number | No | |
+| `ollas[].peso_seco_kg` | number | **Sí para prueba válida** | No negativo |
+| `ollas[].capacidad_l` | number | **Sí para prueba válida** | Mayor que cero |
 | `fases` | array | **Sí** | Una por tipo: `inicio_frio`, `inicio_caliente`, `baja_potencia` |
 | `fases[].tipo_fase` | string | **Sí** | Sin repetir |
-| `fases[].t_inicial` / `t_final` | ISO 8601 | No | `t_final` no puede ser anterior |
-| `fases[].peso_combustible_inicial_kg` | number | No | |
-| `fases[].peso_combustible_final_kg` | number | No | |
+| `fases[].t_inicial` / `t_final` | ISO 8601 | Sí para prueba válida | Final posterior al inicio |
+| `fases[].peso_combustible_inicial_kg` | number | Sí para prueba válida | No negativo |
+| `fases[].peso_combustible_final_kg` | number | Sí para prueba válida | Entre cero y el peso inicial |
 | `fases[].peso_carbon_con_recipiente_kg` | number | No | |
 | `fases[].peso_cenizas_kg` | number | No | |
 | `fases[].observaciones` | string | No | |
@@ -961,7 +1042,130 @@ Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formular
 | `fases[].ollas[].peso_con_agua_inicial_kg` | number | No | |
 | `fases[].ollas[].peso_con_agua_final_kg` | number | No | |
 
+> Una prueba válida requiere las fases `inicio_frio` y `baja_potencia`; `inicio_caliente` es opcional. En cada fase registrada, la olla 1 requiere sus mediciones de agua. Fases válidas exigen duración positiva, tara cuando se pesa carbón, temperaturas y pesos con agua coherentes con la olla vacía, y punto de ebullición en rango. Las repeticiones marcadas inválidas conservan los datos para documentar el ensayo, pero requieren motivo y se excluyen del IWA.
+>
 > Las fases y muestras referencian las ollas por `numero_olla`, no por `id`: al crear todo junto, los ids todavía no existen. SQLAlchemy resuelve las llaves foráneas al hacer `flush` dentro de la transacción.
+
+**Cuerpo de ejemplo**
+
+```json
+{
+  "prueba": {
+    "fecha": "2026-11-02T08:00:00",
+    "investigador_id": 1,
+    "laboratorio_id": 1,
+    "combustible_id": 1,
+    "conjunto_pruebas_id": 1,
+    "peso_recipiente_carbon_kg": 0.85,
+    "numero_repeticion": 2,
+    "observaciones": "Prueba WBT completa con dos ollas."
+  },
+  "condiciones": {
+    "temperatura_c": 18.5,
+    "humedad_relativa_pct": 65,
+    "altitud_m": 2850,
+    "presion_atmosferica_kpa": 101.325,
+    "viento_ms": 1.2,
+    "condicion_viento": "Viento leve",
+    "punto_ebullicion_c": 98
+  },
+  "muestras": [
+    { "numero_lenio": 1, "numero_medicion": 1, "humedad_pct": 9.1 },
+    { "numero_lenio": 1, "numero_medicion": 2, "humedad_pct": 8.9 },
+    { "numero_lenio": 1, "numero_medicion": 3, "humedad_pct": 9.0 },
+    { "numero_lenio": 2, "numero_medicion": 1, "humedad_pct": 9.2 },
+    { "numero_lenio": 2, "numero_medicion": 2, "humedad_pct": 8.8 },
+    { "numero_lenio": 2, "numero_medicion": 3, "humedad_pct": 9.0 },
+    { "numero_lenio": 3, "numero_medicion": 1, "humedad_pct": 9.1 },
+    { "numero_lenio": 3, "numero_medicion": 2, "humedad_pct": 8.9 },
+    { "numero_lenio": 3, "numero_medicion": 3, "humedad_pct": 9.0 }
+  ],
+  "ollas": [
+    { "numero_olla": 1, "peso_seco_kg": 0.85, "capacidad_l": 5.0 },
+    { "numero_olla": 2, "peso_seco_kg": 0.92, "capacidad_l": 4.0 }
+  ],
+  "fases": [
+    {
+      "tipo_fase": "inicio_frio",
+      "t_inicial": "2026-11-02T08:00:00",
+      "t_final": "2026-11-02T08:30:00",
+      "peso_combustible_inicial_kg": 1.2,
+      "peso_combustible_final_kg": 0.55,
+      "peso_carbon_con_recipiente_kg": 0.2,
+      "peso_cenizas_kg": 0.05,
+      "observaciones": "Termina cuando hierve la olla 1",
+      "ollas": [
+        {
+          "numero_olla": 1,
+          "temperatura_inicial_agua_c": 24.0,
+          "temperatura_final_agua_c": 98.0,
+          "peso_con_agua_inicial_kg": 5.85,
+          "peso_con_agua_final_kg": 5.15
+        },
+        {
+          "numero_olla": 2,
+          "temperatura_inicial_agua_c": 24.0,
+          "temperatura_final_agua_c": 97.5,
+          "peso_con_agua_inicial_kg": 4.92,
+          "peso_con_agua_final_kg": 4.30
+        }
+      ]
+    },
+    {
+      "tipo_fase": "inicio_caliente",
+      "t_inicial": "2026-11-02T08:30:00",
+      "t_final": "2026-11-02T09:00:00",
+      "peso_combustible_inicial_kg": 1.1,
+      "peso_combustible_final_kg": 0.5,
+      "peso_carbon_con_recipiente_kg": 0.22,
+      "peso_cenizas_kg": 0.04,
+      "observaciones": "Fase con agua a temperatura ambiente y la estufa ya caliente",
+      "ollas": [
+        {
+          "numero_olla": 1,
+          "temperatura_inicial_agua_c": 24.0,
+          "temperatura_final_agua_c": 98.0,
+          "peso_con_agua_inicial_kg": 5.85,
+          "peso_con_agua_final_kg": 5.15
+        },
+        {
+          "numero_olla": 2,
+          "temperatura_inicial_agua_c": 24.0,
+          "temperatura_final_agua_c": 97.5,
+          "peso_con_agua_inicial_kg": 4.92,
+          "peso_con_agua_final_kg": 4.30
+        }
+      ]
+    },
+    {
+      "tipo_fase": "baja_potencia",
+      "t_inicial": "2026-11-02T09:00:00",
+      "t_final": "2026-11-02T09:30:00",
+      "peso_combustible_inicial_kg": 0.5,
+      "peso_combustible_final_kg": 0.2,
+      "peso_carbon_con_recipiente_kg": 0.24,
+      "peso_cenizas_kg": 0.03,
+      "observaciones": "Fase de baja potencia",
+      "ollas": [
+        {
+          "numero_olla": 1,
+          "temperatura_inicial_agua_c": 98.0,
+          "temperatura_final_agua_c": 98.0,
+          "peso_con_agua_inicial_kg": 5.15,
+          "peso_con_agua_final_kg": 4.45
+        },
+        {
+          "numero_olla": 2,
+          "temperatura_inicial_agua_c": 98.0,
+          "temperatura_final_agua_c": 98.0,
+          "peso_con_agua_inicial_kg": 4.30,
+          "peso_con_agua_final_kg": 3.60
+        }
+      ]
+    }
+  ]
+}
+```
 
 **Respuesta `201`**
 
@@ -972,9 +1176,22 @@ Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formular
   "promedio_humedad_pct": 9.0,
   "muestras": 9,
   "ollas": 2,
-  "fases": 3
+  "fases": 3,
+  "conjunto_pruebas_id": 1,
+  "es_valida": true,
+  "motivo_invalidez": null,
+  "numero_repeticion": 2,
+  "resultado_prueba": { "eficiencia_alta_pct": 20.15, "consumo_especifico_baja_mj_min_l": 0.020385, "...": "ver §6.5" },
+  "error_calculo": null,
+  "resultados": {
+    "inicio_frio": { "eficiencia_termica_pct": 52.24, "...": "18 campos de resultado_fase" },
+    "inicio_caliente": { "...": "18 campos de resultado_fase" },
+    "baja_potencia": { "...": "18 campos de resultado_fase" }
+  }
 }
 ```
+
+Después de guardar la prueba, el endpoint escribe un `resultado_fase` por fase y compone `resultado_prueba`. Si falla un cálculo, la prueba se conserva (`201`), con el motivo en `error_calculo` y los resultados que hayan podido guardarse. `prueba.es_valida` es un booleano opcional (por defecto `true`); si es `false`, `prueba.motivo_invalidez` es obligatorio y se devuelve en la respuesta. La repetición inválida conserva sus mediciones y no aporta al conjunto; los resultados calculados se muestran si los datos permiten obtenerlos.
 
 **Errores `400`**
 
@@ -988,13 +1205,13 @@ Es el endpoint que usa el front al pulsar "Guardar prueba" al final del formular
 | Fase desconocida | `fases[0].tipo_fase debe ser inicio_frio, inicio_caliente o baja_potencia` |
 | Humedad fuera de rango | `humedad_pct debe estar entre 0 y 100` |
 | Olla de fase no declarada | `fases[0].ollas[0] referencia la olla 3, que no está en ollas` |
-| Fechas incoherentes | `fases[0].t_final no puede ser anterior a t_inicial` |
+| Duración cero/negativa, combustible final mayor al inicial, tara o pesos inconsistentes | Mensaje identifica el tipo de fase que debe revisarse |
 
 **Atomicidad**
 
 `crear_prueba_completa()` valida todo antes de escribir, arma el grafo de objetos y hace **un solo `commit`**. No hay `commit` intermedio. Cualquier `IntegrityError` dispara `rollback()` y la base queda exactamente como estaba: sin condiciones huérfanas, sin prueba a medias y sin riesgo de duplicar `(conjunto, repetición)` al reintentar.
 
-> `fase_prueba.tipo_fase` es un `ENUM` de PostgreSQL (`tipo_fase_enum`); un valor fuera de los tres válidos falla en la base y también revierte la transacción.
+> La baja potencia se contrasta en la pantalla con la guía de ~45 min y ~3 °C bajo ebullición. Si la temperatura final cae más de 6 °C, se presenta un aviso para revisar e invalidar si corresponde. Es un aviso, no una validación automática: el formulario no registra temperaturas intermedias y por ello no puede comprobar toda la fase. `fase_prueba.tipo_fase` es un `ENUM` de PostgreSQL; un valor fuera de los tres válidos falla en la base y también revierte la transacción.
 
 ---
 
@@ -1104,7 +1321,7 @@ Las fases se ordenan `inicio_frio` → `inicio_caliente` → `baja_potencia`, y 
 
 ### 6.3 `GET /api/calculos/datos/calcular/<prueba_id>`
 
-Ejecuta `formulas.py` en memoria y devuelve los 18 campos de `resultado_fase` por cada fase. **No guarda nada en la base.**
+Devuelve los 18 campos de `resultado_fase` por cada fase. Si la prueba ya tiene resultados persistidos, **los lee de la base**; si falta alguna fase, ejecuta `formulas.py` y los devuelve calculados sin guardarlos.
 
 **Respuesta `200`**
 
@@ -1166,6 +1383,59 @@ AttributeError: module 'app.modules.calculos.services' has no attribute 'get_dat
 
 La ruta quedó llamando a `services.get_datos()`, pero la función se renombró a `get_data()` y esa ruta ahora es `/datos/list/<id>`. Para obtener los datos hay que usar `GET /api/calculos/datos/list/<prueba_id>`.
 
+### 6.5 `GET /api/calculos/pruebas/<prueba_id>/resultado`
+
+Métricas IWA y valores de referencia de una prueba, compuestos desde `resultado_fase`. No recalcula: si la prueba ya tiene `resultado_prueba`, devuelve lo persistido; si no, compone los valores en memoria y responde con `id: null`.
+
+**Respuesta `200`**
+
+```json
+{
+  "id": 1,
+  "prueba_wbt_id": 3,
+  "eficiencia_alta_pct": 20.15,
+  "consumo_especifico_baja_mj_min_l": 0.020385,
+  "relacion_reduccion": 7.632146,
+  "combustible_ref_5l_g": 1188.982,
+  "energia_ref_5l_kj": 21996.176,
+  "co_alta_g_mj": null,
+  "pm_alta_mg_mj": null,
+  "co_baja_g_min_l": null,
+  "pm_baja_mg_min_l": null,
+  "co_interior_g_min": null,
+  "pm_interior_mg_min": null,
+  "co_ref_5l_g": null,
+  "pm_ref_5l_g": null
+}
+```
+
+| Campo | Fórmula | Estado |
+|---|---|---|
+| `eficiencia_alta_pct` | promedio de η de inicio frío y caliente; si no hay caliente, solo frío | ✅ |
+| `consumo_especifico_baja_mj_min_l` | `consumo_especifico_g_l × PCN / (1000 × tiempo_fase_min)` | ✅ |
+| `relacion_reduccion` | `potencia_fase_kw(inicio_frío) / potencia_fase_kw(baja_potencia)` | ✅ |
+| `combustible_ref_5l_g` | `5 × (promedio(SC_corregido frío/caliente) + SC baja)` | ✅ |
+| `energia_ref_5l_kj` | `combustible_ref_5l_g × PCN` | ✅ |
+| `co_*`, `pm_*` | emisiones | `null` hasta que exista el módulo |
+
+**Respuesta `404`**
+
+```json
+{ "error": "No existe la prueba_wbt con id 99" }
+```
+
+> La composición usa valores de fase de la base; el redondeo de presentación del endpoint de fases no interviene.
+
+### 6.6 `GET /api/calculos/conjuntos/<conjunto_id>/iwa`
+
+Devuelve `conjunto_pruebas_id`, `pruebas_validas`, `version_umbrales` y `metricas`. Para cada métrica se calcula la media aritmética de los valores **positivos** de repeticiones con `es_valida = true` del mismo conjunto. Se usa `resultado_prueba` o, para pruebas anteriores sin esa fila, se compone desde las fases con resultados guardados. Cada métrica cuenta sus propios datos (`n`).
+
+Ejemplo de una entrada: `"eficiencia_alta_pct": {"promedio": 25.0, "n": 3, "tier": "T2"}`. Con uno o dos datos se muestra el promedio y `tier: "NA"`; sin datos, `promedio: null`. `T0` es una clasificación con suficientes datos, no un indicador de datos faltantes. Para un conjunto inexistente se responde `404`.
+
+Se aplica la versión más reciente de [`iwa_umbral`](../SICEE/database/migrations/iwa_umbral.sql), sin redondear el promedio para clasificarlo. Se elige el nivel más alto cuyo umbral se cumpla (inclusivo). El conjunto no guarda un nivel fijo. La versión 1 corresponde a WBT 4.2.3, hoja `Lists`, filas 15–22. CO y PM quedan sin resultado hasta implementar emisiones.
+
+Docker Compose carga el SQL de umbrales después de `init.sql` al crear un volumen nuevo. En una instalación existente se requiere la tabla `resultado_prueba` definida en `init.sql` y ejecutar `database/migrations/iwa_umbral.sql` una vez.
+
 ---
 
 ## 7. Restricciones de base de datos
@@ -1180,11 +1450,14 @@ La ruta quedó llamando a `services.get_datos()`, pero la función se renombró 
 | `mediciones_opcionales` | `UNIQUE (fase_id)` | Una medición por fase |
 | `muestra_humedad` | `UNIQUE (prueba_wbt_id, numero_lenio, numero_medicion)` | No se repite una medición |
 | `muestra_humedad` | `CHECK (humedad_pct BETWEEN 0 AND 100)` | Rechaza valores fuera de rango |
-| `resultado_fase` | `UNIQUE (fase_id)` | Un resultado por fase (nadie lo escribe aún) |
+| `resultado_fase` | `UNIQUE (fase_id)` | Un resultado por fase; se reemplaza al recalcular |
+| `resultado_prueba` | `UNIQUE (prueba_wbt_id)` | Un resultado por prueba; se reemplaza al recalcular |
 | `investigador` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica: `PATCH` con `activo=false`. La fila y sus pruebas se conservan |
 | `laboratorio` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. El `GET` del catálogo omite los inactivos |
 | `estufa` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. Al desactivarla, sus `conjunto_pruebas` dejan de ofrecerse |
 | `combustible` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. El `GET` del catálogo omite los inactivos |
+| `especie_madera` | `UNIQUE (especie, fuente_codigo)` | La misma especie puede existir con otra fuente |
+| `especie_madera` | `activo BOOLEAN NOT NULL DEFAULT TRUE` | Baja lógica. El formulario de combustible usa `/especies/activos` |
 
 Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DELETE CASCADE`. No hay endpoint de borrado físico: en `investigador`, `laboratorio`, `estufa` y `combustible` el borrado es lógico, y en el resto no existe.
 
@@ -1198,8 +1471,7 @@ Todas las llaves foráneas de fases, ollas, mediciones y resultados usan `ON DEL
 | Filtrado de inactivos en investigadores | `GET /` devuelve activos e inactivos; `GET /list_activos` sí filtra. El formulario usa el segundo |
 | `activo` en las respuestas de investigadores | El front no puede saber el estado de cada investigador |
 | Validación del `PATCH` de investigadores | Sin un `activo` booleano responde `500` en vez de `400` |
-| Escritura de `resultado_fase` | Los resultados calculados no se guardan; solo existen en la respuesta de `calcular` |
-| `resultado_prueba` | No hay tabla ni promedios por prueba |
+| Escritura de `resultado_fase` | Los resultados se escriben al guardar la prueba; si el cálculo falla, la prueba se conserva con `error_calculo` |
 | Endpoint de emisiones calculadas | `co2_total_g`, `co_total_g` y `pm_total_g` solo se almacenan |
 | Validaciones del protocolo | No se aplican las reglas de 3 °C / 6 °C ni la validez por repeticiones |
 | Autenticación | No existe, por diseño |

@@ -2,8 +2,10 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from uuid import UUID
 
-from flask import request
+from flask import current_app, request
 
+from app.extensions import db
+from app.modules.calculos import services as calculos_services
 from . import bp, services
 from .constants import TIPOS_FASE
 
@@ -358,6 +360,24 @@ def crear_prueba_wbt_completa():
     except (TypeError, ValueError) as exc:
         return {'error': f'Datos inválidos: {exc}'}, 400
 
+    # La prueba ya está guardada. Los resultados se escriben en resultado_fase
+    # en su propia transacción: si el cálculo falla, la prueba no se pierde.
+    resultados = None
+    resultado_prueba = None
+    error_calculo = None
+    try:
+        resultados = calculos_services.guardar_resultados(prueba.id)
+        resultado_prueba = calculos_services.guardar_resultado_prueba(prueba.id)
+    except (TypeError, ValueError) as exc:
+        db.session.rollback()
+        error_calculo = str(exc)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            'Error inesperado al calcular la prueba %s', prueba.id
+        )
+        error_calculo = 'Error inesperado al calcular los resultados'
+
     return {
         'id': prueba.id,
         'uuid': str(prueba.uuid),
@@ -365,4 +385,11 @@ def crear_prueba_wbt_completa():
         'muestras': len(prueba.muestra_humedad),
         'ollas': len(prueba.olla),
         'fases': len(prueba.fase_prueba),
+        'resultados': resultados,
+        'resultado_prueba': resultado_prueba,
+        'numero_repeticion': prueba.numero_repeticion,
+        'conjunto_pruebas_id': prueba.conjunto_pruebas_id,
+        'es_valida': prueba.es_valida,
+        'motivo_invalidez': prueba.motivo_invalidez,
+        'error_calculo': error_calculo,
     }, 201

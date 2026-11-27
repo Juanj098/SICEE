@@ -3,9 +3,10 @@
 -- Unidades: temperaturas en °C, masas en kg, tiempos en minutos,
 -- energía en kJ, poder calorífico en MJ/kg, potencia en kW.
 --
--- NOTA: las tablas de emisiones (emisiones_prueba,
--- resultado_emisiones_fase y resultado_prueba) todavía no se
--- crean en este script.
+-- NOTA: las tablas de emisiones (emisiones_prueba y
+-- resultado_emisiones_fase) todavía no se crean en este script.
+-- resultado_prueba sí se crea; sus columnas de emisiones quedan
+-- en NULL hasta que exista ese módulo.
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -57,9 +58,29 @@ CREATE TABLE condiciones_ambientales (
     punto_ebullicion_c       DECIMAL(6,2)
 );
 
+-- ------------------------------------------------------------
+-- Especie de madera (catálogo de referencia)
+-- Los poderes caloríficos y el carbono son de la especie; el lote de
+-- combustible guarda una copia de los valores usados en la prueba.
+-- ------------------------------------------------------------
+CREATE TABLE especie_madera (
+    id                            INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    especie                       VARCHAR(100) NOT NULL,
+    nombres_comunes               VARCHAR(500),
+    poder_calorifico_bruto_mj_kg  DECIMAL(8,3),
+    poder_calorifico_neto_mj_kg   DECIMAL(8,3),
+    poder_calorifico_carbon_mj_kg DECIMAL(8,3),
+    contenido_carbono_pct         DECIMAL(5,2),
+    fuente_codigo                 INTEGER,
+    fuente                        VARCHAR(500),
+    activo                        BOOLEAN NOT NULL DEFAULT TRUE,
+    CONSTRAINT uq_especie_madera_especie_fuente UNIQUE NULLS NOT DISTINCT (especie, fuente_codigo)
+);
+
 CREATE TABLE combustible (
     id                           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     tipo                         VARCHAR(100) NOT NULL,
+    especie_id                   INTEGER REFERENCES especie_madera(id),
     longitud_combustible_cm      DECIMAL(8,2),
     ancho_combustible_cm         DECIMAL(8,2),
     poder_calorifico_neto_mj_kg  DECIMAL(8,3),
@@ -190,6 +211,32 @@ CREATE TABLE resultado_fase (
 
 COMMENT ON TABLE resultado_fase IS
     'Resultado agregado por fase. Las masas y energías de agua se suman sobre todas las ollas de olla_fase; el combustible y los tiempos son de la fase.';
+
+-- ------------------------------------------------------------
+-- Resultado de la prueba (métricas IWA y valores de referencia)
+-- Se compone a partir de resultado_fase. Las columnas de emisiones
+-- quedan NULL hasta que exista el módulo de emisiones.
+-- ------------------------------------------------------------
+CREATE TABLE resultado_prueba (
+    id                                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prueba_wbt_id                       INTEGER NOT NULL UNIQUE REFERENCES prueba_wbt(id) ON DELETE CASCADE,
+    eficiencia_alta_pct                 DECIMAL(8,3),
+    consumo_especifico_baja_mj_min_l    DECIMAL(10,6),
+    relacion_reduccion                  DECIMAL(8,3),
+    combustible_ref_5l_g                DECIMAL(10,3),
+    energia_ref_5l_kj                   DECIMAL(12,3),
+    co_alta_g_mj                        DECIMAL(10,4),
+    pm_alta_mg_mj                       DECIMAL(10,4),
+    co_baja_g_min_l                     DECIMAL(10,6),
+    pm_baja_mg_min_l                    DECIMAL(10,6),
+    co_interior_g_min                   DECIMAL(10,6),
+    pm_interior_mg_min                  DECIMAL(10,6),
+    co_ref_5l_g                         DECIMAL(10,4),
+    pm_ref_5l_g                         DECIMAL(10,4)
+);
+
+COMMENT ON TABLE resultado_prueba IS
+    'Resultados que combinan varias fases de una prueba. eficiencia_alta_pct, consumo_especifico_baja_mj_min_l, relacion_reduccion, combustible_ref_5l_g y energia_ref_5l_kj se calculan desde resultado_fase; las columnas co_* y pm_* quedan NULL hasta implementar emisiones.';
 
 -- ------------------------------------------------------------
 -- Mediciones opcionales

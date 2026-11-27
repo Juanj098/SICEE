@@ -23,6 +23,8 @@ export const listActivos = () => get('/investigadores/list_activos')
 export const listLabs = () => get('/catalogos/labs')
 export const listEstufas = () => get('/catalogos/estufas')
 export const listConjuntos = () => get('/pruebas/conjunto_pruebas')
+export const listCombusiblesA = () => get('/catalogos/combustible/activos')
+export const listEspeciesActivas = () => get('/catalogos/especies/activos')
 export const crearInvestigador = (datos) => post('/investigadores/', datos)
 export const crearLaboratorio = (datos) => post('/catalogos/labs', datos)
 export const crearEstufa = (datos) => post('/catalogos/estufas', datos)
@@ -54,4 +56,3 @@ export async function crearCondicionesAmbientales(datos) {
     "No se pudieron crear las condiciones ambientales"
   );
 }
-

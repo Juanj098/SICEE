@@ -1,7 +1,10 @@
 import DatosPrueba from "./components/DatosPrueba";
 import MedicionesGenerales from "./components/MedicionesGenerales";
 import FasesPrueba from "./components/FasesPrueba";
+import ResultadosPrueba from "./components/ResultadosPrueba";
 import { FASES } from "./fases";
+import { construirPayload, validarPrueba } from "./guardado";
+import { post } from "../../api/Client";
 import { useState } from "react";
 
 const MAX_OLLAS = 4;
@@ -12,8 +15,11 @@ const crearFormInicial = () => ({
     prueba: {
         fecha: '',
         numero_repeticion: '',
+        es_valida: true,
+        motivo_invalidez: '',
         investigador_id: '',
         laboratorio_id: '',
+        estufa_id: '',
         conjunto_pruebas_id: '',
         combustible_id: '',
         peso_recipiente_carbon_kg: ''
@@ -95,20 +101,41 @@ export default function PruebaWBT(){
                   }
         )
 
-    // Se renumeran para que las ollas queden siempre 1..n.
+    // Se renumeran para que las ollas queden siempre 1..n. Las fases guardan
+    // su propia copia por `numero_olla`, así que hay que renumerarlas también.
     const quitarOlla = (indice) =>
-        setForm((f) =>
-            f.ollas.length <= 1
-                ? f
-                : {
-                      ...f,
-                      ollas: f.ollas
-                          .filter((_, i) => i !== indice)
-                          .map((o, i) => ({ ...o, numero_olla: i + 1 }))
-                  }
-        )
+        setForm((f) => {
+            if (f.ollas.length <= 1) return f
+
+            const eliminada = f.ollas[indice].numero_olla
+            const restantes = f.ollas.filter((_, i) => i !== indice)
+            const mapa = new Map(
+                restantes.map((olla, i) => [olla.numero_olla, i + 1])
+            )
+
+            return {
+                ...f,
+                ollas: restantes.map((olla, i) => ({
+                    ...olla,
+                    numero_olla: i + 1
+                })),
+                fases: f.fases.map((fase) => ({
+                    ...fase,
+                    ollas: fase.ollas
+                        .filter((olla) => olla.numero_olla !== eliminada)
+                        .map((olla) => ({
+                            ...olla,
+                            numero_olla: mapa.get(olla.numero_olla)
+                        }))
+                        .filter((olla) => olla.numero_olla !== undefined)
+                }))
+            }
+        })
 
     const [pantalla, setPantalla] = useState('general')
+    const [guardando, setGuardando] = useState(false)
+    const [errorGuardado, setErrorGuardado] = useState('')
+    const [resumen, setResumen] = useState(null)
 
     const cambiarFase = (indice, campo, valor) =>
         setForm((f) => ({
@@ -142,13 +169,57 @@ export default function PruebaWBT(){
             })
         }))
 
+    const guardarPrueba = async () => {
+        if (guardando) return
+
+        const error = validarPrueba(form)
+        if (error) {
+            setErrorGuardado(error)
+            return
+        }
+
+        setErrorGuardado('')
+        setGuardando(true)
+        try {
+            const res = await post('/pruebas/completa', construirPayload(form))
+            setForm(crearFormInicial())
+            setPantalla('general')
+
+            setResumen(res)
+        } catch (e) {
+            setErrorGuardado(e.message)
+        } finally {
+            setGuardando(false)
+        }
+    }
+
+    const nuevaPrueba = () => {
+        setResumen(null)
+        setPantalla('general')
+    }
+
+    if (resumen) {
+        return (
+            <ResultadosPrueba
+                resumen={resumen}
+                resultados={resumen.resultados}
+                errorCalculo={resumen.error_calculo}
+                onNuevaPrueba={nuevaPrueba}
+            />
+        )
+    }
+
     if (pantalla === 'fases') {
         return (
             <FasesPrueba
                 datos={form}
                 onVolver={() => setPantalla('general')}
                 onCambiarFase={cambiarFase}
+                onCambiarPrueba={cambiarPrueba}
                 onCambiarOllaFase={cambiarOllaFase}
+                onGuardar={guardarPrueba}
+                guardando={guardando}
+                errorGuardado={errorGuardado}
             />
         )
     }
@@ -176,9 +247,9 @@ export default function PruebaWBT(){
                                focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2"
                 >
                     <span className="material-symbols-outlined" aria-hidden="true">
-                        save
+                        experiment
                     </span>
-                    Guardar datos
+                    Empezar prueba
                 </button>
             </div>
         </div>

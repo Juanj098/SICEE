@@ -305,9 +305,12 @@ def _c_decimal(valor, campo):
     if valor is None or valor == '':
         return None
     try:
-        return Decimal(str(valor))
+        numero = Decimal(str(valor))
     except (InvalidOperation, ValueError, TypeError):
         raise ValueError(f'{campo} debe ser un número')
+    if not numero.is_finite():
+        raise ValueError(f'{campo} debe ser un número finito')
+    return numero
 
 def _c_entero(valor, campo, obligatorio=True):
     if valor is None or valor == '':
@@ -315,9 +318,12 @@ def _c_entero(valor, campo, obligatorio=True):
             raise ValueError(f'El campo {campo} es obligatorio')
         return None
     try:
-        return int(valor)
+        entero = int(valor)
     except (TypeError, ValueError):
         raise ValueError(f'{campo} debe ser un número entero')
+    if isinstance(valor, bool) or Decimal(str(valor)) != entero:
+        raise ValueError(f'{campo} debe ser un número entero')
+    return entero
 
 def _c_texto(valor):
     if valor is None:
@@ -337,6 +343,47 @@ def _c_existe(modelo, id_, etiqueta):
     if db.session.get(modelo, id_) is None:
         raise ValueError(f'No existe {etiqueta} con id {id_}')
 
+def _validar_medicion_fase(fase, tara, condiciones):
+    nombre = fase.tipo_fase
+    if not fase.t_inicial or not fase.t_final or fase.t_final <= fase.t_inicial:
+        raise ValueError(f'{nombre}: indique horas de inicio y fin con duración positiva')
+    inicial, final = fase.peso_combustible_inicial_kg, fase.peso_combustible_final_kg
+    if inicial is None or final is None or not 0 <= final <= inicial:
+        raise ValueError(f'{nombre}: revise los pesos de combustible (0 ≤ final ≤ inicial)')
+    carbon = fase.peso_carbon_con_recipiente_kg
+    if carbon is not None and (tara is None or not 0 <= tara <= carbon):
+        raise ValueError(f'{nombre}: se requiere una tara entre cero y el peso del carbón con recipiente')
+    if condiciones.temperatura_c is None or condiciones.punto_ebullicion_c is None:
+        raise ValueError(f'{nombre}: faltan la temperatura ambiente o el punto de ebullición local')
+    if not 0 < condiciones.punto_ebullicion_c <= 110:
+        raise ValueError(f'{nombre}: el punto de ebullición debe estar entre 0 y 110 °C')
+
+    olla_principal = False
+    for medicion in fase.olla_fase:
+        numero = medicion.olla.numero_olla
+        valores = (medicion.temperatura_inicial_agua_c, medicion.temperatura_final_agua_c,
+                   medicion.peso_con_agua_inicial_kg, medicion.peso_con_agua_final_kg)
+        if all(valor is None for valor in valores):
+            continue
+        if None in valores or medicion.olla.peso_seco_kg is None:
+            raise ValueError(f'{nombre}, olla {numero}: faltan pesos o temperaturas')
+        if (medicion.peso_con_agua_inicial_kg < medicion.olla.peso_seco_kg
+                or medicion.peso_con_agua_final_kg < medicion.olla.peso_seco_kg):
+            raise ValueError(f'{nombre}, olla {numero}: el peso con agua debe ser mayor o igual al peso seco de la olla')
+        if medicion.peso_con_agua_final_kg > medicion.peso_con_agua_inicial_kg:
+            raise ValueError(f'{nombre}, olla {numero}: el peso final con agua supera al inicial')
+        if not 0 <= medicion.temperatura_inicial_agua_c <= 110 or not 0 <= medicion.temperatura_final_agua_c <= 110:
+            raise ValueError(f'{nombre}, olla {numero}: las temperaturas del agua deben estar entre 0 y 110 °C')
+        if nombre != 'baja_potencia' and medicion.temperatura_inicial_agua_c >= condiciones.punto_ebullicion_c:
+            raise ValueError(f'{nombre}, olla {numero}: la temperatura inicial debe ser menor que la de ebullición')
+        if nombre != 'baja_potencia' and medicion.temperatura_final_agua_c < medicion.temperatura_inicial_agua_c:
+            raise ValueError(f'{nombre}, olla {numero}: en alta potencia la temperatura final no puede ser menor que la inicial')
+        if numero == 1:
+            olla_principal = True
+    if not olla_principal:
+        raise ValueError(f'{nombre}: faltan las mediciones de la olla 1')
+
+
 def crear_prueba_completa(datos):
     """Crea la prueba con todas sus mediciones en una sola transacción.
 
@@ -347,8 +394,17 @@ def crear_prueba_completa(datos):
     if not isinstance(datos, dict):
         raise ValueError('El cuerpo debe ser un objeto JSON')
 
-    prueba_datos = datos.get('prueba') or {}
-    condiciones_datos = datos.get('condiciones') or {}
+    prueba_datos = datos.get('prueba', {})
+    condiciones_datos = datos.get('condiciones', {})
+    prueba_datos = {} if prueba_datos is None else prueba_datos
+    condiciones_datos = {} if condiciones_datos is None else condiciones_datos
+    if not isinstance(prueba_datos, dict) or not isinstance(condiciones_datos, dict):
+        raise ValueError('prueba y condiciones deben ser objetos JSON')
+    es_valida = prueba_datos.get('es_valida', True)
+    if not isinstance(es_valida, bool):
+        raise ValueError('es_valida debe ser booleano')
+    if not es_valida and not _c_texto(prueba_datos.get('motivo_invalidez')):
+        raise ValueError('motivo_invalidez es obligatorio cuando es_valida es false')
     muestras_datos = datos.get('muestras') or []
     ollas_datos = datos.get('ollas') or []
     fases_datos = datos.get('fases') or []
@@ -376,10 +432,11 @@ def crear_prueba_completa(datos):
     numero_repeticion = _c_entero(
         prueba_datos.get('numero_repeticion'), 'numero_repeticion', obligatorio=False
     )
-    if numero_repeticion is None:
-        numero_repeticion = 1
-    if numero_repeticion < 1:
+    if numero_repeticion is not None and numero_repeticion < 1:
         raise ValueError('numero_repeticion debe ser mayor o igual a 1')
+    fecha_prueba = _c_fecha(prueba_datos.get('fecha'), 'fecha')
+    if fecha_prueba is None:
+        raise ValueError('El campo fecha es obligatorio')
 
     condiciones = Cond_Ambientales(
         temperatura_c=_c_decimal(condiciones_datos.get('temperatura_c'), 'temperatura_c'),
@@ -397,6 +454,14 @@ def crear_prueba_completa(datos):
             condiciones_datos.get('punto_ebullicion_c'), 'punto_ebullicion_c'
         ),
     )
+    if condiciones.humedad_relativa_pct is not None and not 0 <= condiciones.humedad_relativa_pct <= 100:
+        raise ValueError('humedad_relativa_pct debe estar entre 0 y 100')
+    if condiciones.altitud_m is not None and condiciones.altitud_m < 0:
+        raise ValueError('altitud_m no puede ser negativa')
+    if condiciones.presion_atmosferica_kpa is not None and condiciones.presion_atmosferica_kpa <= 0:
+        raise ValueError('presion_atmosferica_kpa debe ser mayor que cero')
+    if condiciones.viento_ms is not None and condiciones.viento_ms < 0:
+        raise ValueError('viento_ms no puede ser negativo')
 
     muestras = []
     claves_humedad = set()
@@ -455,7 +520,17 @@ def crear_prueba_completa(datos):
                 olla_datos.get('capacidad_l'), f'ollas[{i}].capacidad_l'
             ),
         )
+        if ollas[numero_olla].peso_seco_kg is not None and ollas[numero_olla].peso_seco_kg < 0:
+            raise ValueError(f'El peso seco de la olla {numero_olla} no puede ser negativo')
+        if ollas[numero_olla].capacidad_l is not None and ollas[numero_olla].capacidad_l <= 0:
+            raise ValueError(f'La capacidad de la olla {numero_olla} debe ser mayor que cero')
 
+    if es_valida:
+        for numero_olla, olla in ollas.items():
+            if olla.peso_seco_kg is None or olla.capacidad_l is None:
+                raise ValueError(f'La olla {numero_olla} requiere peso seco y capacidad para una prueba válida')
+
+    tara = _c_decimal(prueba_datos.get('peso_recipiente_carbon_kg'), 'peso_recipiente_carbon_kg')
     fases = []
     tipos_vistos = set()
     for i, fase_datos in enumerate(fases_datos):
@@ -474,8 +549,6 @@ def crear_prueba_completa(datos):
 
         t_inicial = _c_fecha(fase_datos.get('t_inicial'), f'fases[{i}].t_inicial')
         t_final = _c_fecha(fase_datos.get('t_final'), f'fases[{i}].t_final')
-        if t_inicial and t_final and t_final < t_inicial:
-            raise ValueError(f'fases[{i}].t_final no puede ser anterior a t_inicial')
 
         fase = FasePrueba(
             tipo_fase=tipo_fase,
@@ -545,20 +618,32 @@ def crear_prueba_completa(datos):
                 )
             )
 
+        if es_valida:
+            _validar_medicion_fase(fase, tara, condiciones)
         fases.append(fase)
 
+    if es_valida and not {'inicio_frio', 'baja_potencia'}.issubset(tipos_vistos):
+        raise ValueError('Una prueba WBT válida requiere inicio_frio y baja_potencia; inicio_caliente es opcional')
+
+    # Serializa la numeración dentro del conjunto para guardados simultáneos.
+    db.session.query(ConjuntoPruebas.id).filter_by(id=conjunto_pruebas_id).with_for_update().one()
+    if numero_repeticion is None:
+        ultima = db.session.query(db.func.max(PruebaWBT.numero_repeticion)).filter_by(
+            conjunto_pruebas_id=conjunto_pruebas_id
+        ).scalar()
+        numero_repeticion = (ultima or 0) + 1
+
     prueba = PruebaWBT(
-        fecha=_c_fecha(prueba_datos.get('fecha'), 'fecha'),
+        fecha=fecha_prueba,
         investigador_id=investigador_id,
         laboratorio_id=laboratorio_id,
         combustible_id=combustible_id,
         conjunto_pruebas_id=conjunto_pruebas_id,
-        peso_recipiente_carbon_kg=_c_decimal(
-            prueba_datos.get('peso_recipiente_carbon_kg'),
-            'peso_recipiente_carbon_kg',
-        ),
+        peso_recipiente_carbon_kg=tara,
         numero_repeticion=numero_repeticion,
         observaciones=_c_texto(prueba_datos.get('observaciones')),
+        es_valida=es_valida,
+        motivo_invalidez=_c_texto(prueba_datos.get('motivo_invalidez')) if not es_valida else None,
     )
     prueba.cond_ambientales = condiciones
     prueba.muestra_humedad = muestras

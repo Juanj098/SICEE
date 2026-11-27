@@ -61,6 +61,12 @@ class PruebaWBT(db.Model):
         cascade="all, delete-orphan",
         order_by="MuestraHumedad.numero_lenio, MuestraHumedad.numero_medicion",
     )
+    resultado = db.relationship(
+        "resultado_prueba",
+        back_populates="prueba_wbt",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         db.UniqueConstraint(

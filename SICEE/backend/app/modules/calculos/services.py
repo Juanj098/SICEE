@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy import select, text
 
@@ -10,8 +11,8 @@ from app.modules.pruebas.models import (
     OllaFase,
     PruebaWBT,
 )
-from .models import resultado_fase
-from app.modules.calculos.formulas import calcular_resultado_fase
+from .models import resultado_fase, resultado_prueba
+from app.modules.calculos.formulas import calcular_resultado_fase, poder_calorifico_neto_mj_kg
 
 
 def _num(valor):
@@ -26,6 +27,63 @@ def _redondear(resultado, decimales=2):
     return {
         k: round(v, decimales) if isinstance(v, float) else v
         for k, v in resultado.items()
+    }
+
+
+CAMPOS_RESULTADO_FASE = (
+    "tiempo_fase_min",
+    "masa_agua_inicial_kg",
+    "masa_agua_final_kg",
+    "masa_agua_evaporada_kg",
+    "masa_agua_efectiva_kg",
+    "combustible_consumido_kg",
+    "tiempo_ebullicion_min",
+    "tiempo_ebullicion_corregido_min",
+    "energia_util_kj",
+    "energia_combustible_kj",
+    "eficiencia_termica_pct",
+    "consumo_especifico_g_l",
+    "velocidad_combustion_g_min",
+    "potencia_fase_kw",
+    "energia_especifica_corregida_kj_l",
+    "combustible_seco_equivalente_kg",
+    "cambio_carbon_kg",
+    "consumo_especifico_corregido_g_l",
+)
+
+
+def _valores_resultado(resultado):
+    """Extrae de un resultado_fase solo las 18 columnas calculadas."""
+    return {campo: _num(getattr(resultado, campo)) for campo in CAMPOS_RESULTADO_FASE}
+
+
+CAMPOS_RESULTADO_PRUEBA = (
+    "eficiencia_alta_pct",
+    "consumo_especifico_baja_mj_min_l",
+    "relacion_reduccion",
+    "combustible_ref_5l_g",
+    "energia_ref_5l_kj",
+    "co_alta_g_mj",
+    "pm_alta_mg_mj",
+    "co_baja_g_min_l",
+    "pm_baja_mg_min_l",
+    "co_interior_g_min",
+    "pm_interior_mg_min",
+    "co_ref_5l_g",
+    "pm_ref_5l_g",
+)
+
+
+def _resultado_prueba_a_dict(resultado):
+    if resultado is None:
+        return None
+    return {
+        "id": resultado.id,
+        "prueba_wbt_id": resultado.prueba_wbt_id,
+        **{
+            campo: _num(getattr(resultado, campo))
+            for campo in CAMPOS_RESULTADO_PRUEBA
+        },
     }
 
 # ------------------------------------------------------------
@@ -261,11 +319,7 @@ def get_data_db(id_prueba):
     return data
 
 
-def get_data(id):
-    data = get_data_db(id)
-    if data is None:
-        return None
-
+def _data_dict(data):
     # La humedad no vive en el catálogo de combustible: se mide en cada prueba
     # (3 leños × 3 mediciones) y su promedio alimenta la ecuación (11).
     combustible = _combustible_a_dict(data.combustible)
@@ -280,11 +334,28 @@ def get_data(id):
     }
 
 
-def calculo_fases(id):
-    dict_prueba = get_data(id)
-    if dict_prueba is None:
+def get_data(id):
+    data = get_data_db(id)
+    if data is None:
+        return None
+    return _data_dict(data)
+
+
+def _resultados_guardados(data):
+    """Devuelve los resultados persistidos, o None si falta alguna fase."""
+    if not data.fase_prueba:
         return None
 
+    resultados = {}
+    for fase in data.fase_prueba:
+        if not fase.resultados:
+            return None
+        resultados[fase.tipo_fase] = _redondear(_valores_resultado(fase.resultados[0]))
+    return resultados
+
+
+def _calcular_resultados(dict_prueba):
+    """Calcula las fases y devuelve [(fase_id, tipo_fase, resultado)]."""
     combustible = dict_prueba['combustible']
     cond_ambientales = dict_prueba['condiciones_ambientales']
     peso_recipiente_carbon_kg = dict_prueba['prueba']['peso_recipiente_carbon_kg']
@@ -296,12 +367,10 @@ def calculo_fases(id):
             'La prueba no tiene mediciones de humedad del combustible (muestra_humedad)'
         )
 
-    resp = {}
+    calculados = []
     dc_frio = None
-    
-    for fase in dict_prueba['fases']:
-        tipo = fase['tipo_fase']  
 
+    for fase in dict_prueba['fases']:
         resultado = calcular_resultado_fase(
             fase,
             fase['ollas'],
@@ -311,9 +380,240 @@ def calculo_fases(id):
             cambio_carbon_frio_kg=dc_frio
         )
 
-        if tipo == 'inicio_frio':
+        if fase['tipo_fase'] == 'inicio_frio':
             dc_frio = resultado['cambio_carbon_kg']
 
+        calculados.append((fase['id'], fase['tipo_fase'], resultado))
 
-        resp[tipo]=_redondear(resultado)
-    return resp
+    return calculados
+
+
+def calculo_fases(id):
+    data = get_data_db(id)
+    if data is None:
+        return None
+
+    guardados = _resultados_guardados(data)
+    if guardados is not None:
+        return guardados
+
+    return {
+        tipo: _redondear(resultado)
+        for _, tipo, resultado in _calcular_resultados(_data_dict(data))
+    }
+
+
+def guardar_resultados(id):
+    """Calcula y persiste un resultado_fase por fase.
+
+    Reemplaza los resultados previos de la prueba. Se ejecuta después de
+    guardar la prueba completa, en su propia transacción: si el cálculo falla,
+    la prueba ya guardada se conserva.
+    """
+    data = get_data_db(id)
+    if data is None:
+        return None
+
+    calculados = _calcular_resultados(_data_dict(data))
+    ids_fases = [fase_id for fase_id, _, _ in calculados]
+
+    try:
+        # Reemplaza los resultados previos: la relación es 1:1 por fase.
+        db.session.query(resultado_fase).filter(
+            resultado_fase.fase_id.in_(ids_fases)
+        ).delete(synchronize_session='fetch')
+
+        db.session.add_all(
+            resultado_fase(fase_id=fase_id, **resultado)
+            for fase_id, _, resultado in calculados
+        )
+        db.session.commit()
+    except IntegrityError as exc:
+        db.session.rollback()
+        raise ValueError(
+            f'No se pudieron guardar los resultados: {exc.orig}'
+        ) from exc
+
+    return {tipo: _redondear(resultado) for _, tipo, resultado in calculados}
+
+
+# ------------------------------------------------------------
+# Resultado de la prueba (métricas IWA y valores de referencia)
+# ------------------------------------------------------------
+def _fases_resultado(data):
+    """Devuelve {tipo_fase: valores de resultado_fase} para la prueba."""
+    fases = {}
+    for fase in data.fase_prueba:
+        if fase.resultados:
+            fases[fase.tipo_fase] = _valores_resultado(fase.resultados[0])
+        else:
+            fases[fase.tipo_fase] = None
+    return fases
+
+
+def _promedio(valores):
+    valores = [v for v in valores if v is not None]
+    if not valores:
+        return None
+    return sum(valores) / len(valores)
+
+
+def _calcular_resultado_prueba(data):
+    """Compone los campos de resultado_prueba desde resultado_fase.
+
+    Las métricas de emisiones quedan en None hasta que exista su módulo.
+    """
+    fases = _fases_resultado(data)
+    frio = fases.get('inicio_frio')
+    caliente = fases.get('inicio_caliente')
+    baja = fases.get('baja_potencia')
+
+    lhv = None
+    combustible = data.combustible
+    if combustible and (combustible.poder_calorifico_neto_mj_kg is not None
+                        or combustible.poder_calorifico_bruto_mj_kg is not None):
+        lhv = poder_calorifico_neto_mj_kg(combustible.poder_calorifico_neto_mj_kg,
+                                          combustible.poder_calorifico_bruto_mj_kg)
+
+    # η_alta = (η_c + η_h) / 2; si no hay inicio caliente, solo η_c.
+    eficiencia_alta = None
+    altas = [frio, caliente] if 'inicio_caliente' in fases else [frio]
+    if all(fase and fase['eficiencia_termica_pct'] is not None for fase in altas):
+        eficiencia_alta = _promedio([fase['eficiencia_termica_pct'] for fase in altas])
+
+    # SC_baja = f_d,s × LHV / (m_rest × Δt_s × 1000), en MJ/(min·L).
+    # consumo_especifico_g_l = f_d,s[g] / m_rest[L], así que:
+    # SC_baja = consumo_especifico_g_l × LHV / (1000 × Δt_s).
+    sc_baja = None
+    if (
+        baja is not None
+        and lhv is not None
+        and baja['consumo_especifico_g_l'] is not None
+        and baja['tiempo_fase_min']
+    ):
+        sc_baja = (
+            baja['consumo_especifico_g_l'] * lhv
+            / (1000 * baja['tiempo_fase_min'])
+        )
+
+    # TDR = FP_c / FP_s
+    relacion = None
+    if (
+        frio is not None
+        and baja is not None
+        and frio['potencia_fase_kw'] is not None
+        and baja['potencia_fase_kw']
+    ):
+        relacion = frio['potencia_fase_kw'] / baja['potencia_fase_kw']
+
+    # BF = 5 × (promedio(SC_corr,c; SC_corr,h) + SC_s)
+    promedio_corr = _promedio([
+        fase['consumo_especifico_corregido_g_l']
+        for fase in (frio, caliente)
+        if fase is not None
+    ])
+    sc_s = baja['consumo_especifico_g_l'] if baja is not None else None
+
+    combustible_ref = None
+    energia_ref = None
+    if promedio_corr is not None and sc_s is not None:
+        combustible_ref = 5 * (promedio_corr + sc_s)
+        if lhv is not None:
+            # g -> kg, MJ/kg -> kJ
+            energia_ref = (combustible_ref / 1000) * lhv * 1000
+
+    return {
+        'eficiencia_alta_pct': eficiencia_alta,
+        'consumo_especifico_baja_mj_min_l': sc_baja,
+        'relacion_reduccion': relacion,
+        'combustible_ref_5l_g': combustible_ref,
+        'energia_ref_5l_kj': energia_ref,
+        'co_alta_g_mj': None,
+        'pm_alta_mg_mj': None,
+        'co_baja_g_min_l': None,
+        'pm_baja_mg_min_l': None,
+        'co_interior_g_min': None,
+        'pm_interior_mg_min': None,
+        'co_ref_5l_g': None,
+        'pm_ref_5l_g': None,
+    }
+
+
+def guardar_resultado_prueba(id):
+    """Calcula y persiste resultado_prueba. Reemplaza el resultado previo."""
+    data = get_data_db(id)
+    if data is None:
+        return None
+
+    valores = _calcular_resultado_prueba(data)
+
+    try:
+        db.session.query(resultado_prueba).filter_by(
+            prueba_wbt_id=id
+        ).delete(synchronize_session='fetch')
+        db.session.add(resultado_prueba(prueba_wbt_id=id, **valores))
+        db.session.commit()
+    except IntegrityError as exc:
+        db.session.rollback()
+        raise ValueError(
+            f'No se pudo guardar el resultado de la prueba: {exc.orig}'
+        ) from exc
+
+    return _resultado_prueba_a_dict(
+        resultado_prueba.query.filter_by(prueba_wbt_id=id).one()
+    )
+
+
+def resultado_prueba_de(id):
+    """Devuelve el resultado persistido o lo compone sin guardarlo."""
+    data = get_data_db(id)
+    if data is None:
+        return None
+
+    if data.resultado is not None:
+        return _resultado_prueba_a_dict(data.resultado)
+
+    return {
+        'id': None,
+        'prueba_wbt_id': id,
+        **_calcular_resultado_prueba(data),
+    }
+
+
+def iwa_conjunto(conjunto_id):
+    if db.session.get(ConjuntoPruebas, conjunto_id) is None:
+        return None
+
+    umbrales = db.session.execute(text("""
+        SELECT * FROM iwa_umbral
+        WHERE version = (SELECT max(version) FROM iwa_umbral)
+    """)).mappings().all()
+    pruebas = PruebaWBT.query.filter_by(conjunto_pruebas_id=conjunto_id, es_valida=True).options(
+        joinedload(PruebaWBT.resultado), joinedload(PruebaWBT.combustible),
+        selectinload(PruebaWBT.fase_prueba).selectinload(FasePrueba.resultados),
+    ).all()
+    # Las pruebas anteriores a resultado_prueba pueden tener resultados de fase.
+    resultados = [
+        _resultado_prueba_a_dict(p.resultado) if p.resultado else _calcular_resultado_prueba(p)
+        for p in pruebas
+    ]
+    metricas = {}
+    for umbral in umbrales:
+        campo = umbral['metrica']
+        valores = [Decimal(str(r[campo])) for r in resultados if r.get(campo) and r[campo] > 0]
+        promedio = sum(valores) / len(valores) if valores else None
+        tier = 'NA'
+        if len(valores) >= 3:
+            tier = 'T0'
+            for nivel in range(1, 5):
+                limite = umbral[f't{nivel}']
+                cumple = promedio >= limite if umbral['mayor_es_mejor'] else promedio <= limite
+                if cumple:
+                    tier = f'T{nivel}'
+        metricas[campo] = {'promedio': _num(promedio), 'n': len(valores), 'tier': tier}
+    return {
+        'conjunto_pruebas_id': conjunto_id,
+        'version_umbrales': umbrales[0]['version'] if umbrales else None,
+        'pruebas_validas': len(pruebas),
+        'metricas': metricas,
+    }

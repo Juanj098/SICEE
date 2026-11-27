@@ -5,6 +5,7 @@ import Modal from "./Modal";
 import FormInvestigador from "./FormInvestigador";
 import FormLaboratorio from "./FormLaboratorio";
 import FormEstufa from "./FormEstufa";
+import { codigoConjunto } from "../conjuntos";
 import { 
     listActivos, 
     crearConjuntoPruebas, 
@@ -25,6 +26,10 @@ export default function DatosPrueba({datos, onChange}){
     const [investigador, setInvestigador] = useState([])
     const [laboratorios, setLaboratorios] = useState([])
     const [estufas, setEstufas] = useState([])
+    const [conjuntos, setConjuntos] = useState([])
+    const [descripcion, setDescripcion] = useState('')
+    const [creandoConjunto, setCreandoConjunto] = useState(false)
+    const [errorConjunto, setErrorConjunto] = useState('')
     const [error, setError] = useState('')
 
     const alCrearInvestigador = (nuevo) => {
@@ -65,30 +70,48 @@ export default function DatosPrueba({datos, onChange}){
         }
     }
 
-    const alCrearEstufa = async (nueva) => {
-        const conjunto = await crearConjuntoPruebas({
-            estufa_id: nueva.id,
-            descripcion: `Conjunto de pruebas ${nueva.marca}`,
-        })
-        setEstufas((lista) => [...lista, {id: conjunto.id, estufa_id: nueva.id, texto: nueva.marca}])
-        onChange('conjunto_pruebas_id', String(conjunto.id))
+    const elegirConjunto = (id) => {
+        onChange('conjunto_pruebas_id', id)
+        onChange('numero_repeticion', '')
+    }
+
+    const elegirEstufa = (id) => {
+        if (id === datos.prueba.estufa_id) return
+        onChange('estufa_id', id)
+        elegirConjunto('')
+    }
+
+    const alCrearEstufa = (nueva) => {
+        setEstufas((lista) => [...lista, nueva])
+        elegirEstufa(String(nueva.id))
         setModal(null)
     }
 
-    // El selector guarda el id del conjunto, pero el borrado desactiva la
-    // estufa dueña: sus conjuntos dejan de ofrecerse en el formulario.
-    const alEliminarEstufa = async (id) => {
-        const opcion = estufas.find((e) => String(e.id) === String(id))
-        if (!opcion) return
+    const crearConjunto = async (evento) => {
+        evento.preventDefault()
+        if (creandoConjunto || !descripcion.trim()) return
+        setCreandoConjunto(true)
+        setErrorConjunto('')
         try {
-            await eliminarEstufa(opcion.estufa_id)
-            const seleccionada = estufas.find(
-                (e) => String(e.id) === String(datos.prueba.conjunto_pruebas_id)
-            )
-            setEstufas((lista) => lista.filter((e) => e.estufa_id !== opcion.estufa_id))
-            if (seleccionada?.estufa_id === opcion.estufa_id) {
-                onChange('conjunto_pruebas_id', '')
-            }
+            const nuevo = await crearConjuntoPruebas({
+                estufa_id: Number(datos.prueba.estufa_id),
+                descripcion: descripcion.trim(),
+            })
+            setConjuntos((lista) => [...lista, nuevo])
+            elegirConjunto(String(nuevo.id))
+            setModal(null)
+        } catch (err) {
+            setErrorConjunto(err.message)
+        } finally {
+            setCreandoConjunto(false)
+        }
+    }
+
+    const alEliminarEstufa = async (id) => {
+        try {
+            await eliminarEstufa(id)
+            setEstufas((lista) => lista.filter((e) => e.id !== id))
+            if (String(id) === datos.prueba.estufa_id) elegirEstufa('')
         } catch (error) {
             setError(error.message)
         }
@@ -109,17 +132,8 @@ export default function DatosPrueba({datos, onChange}){
     useEffect(()=>{
         Promise.all([listEstufas(), listConjuntos()])
         .then(([listaEstufas, conjuntos]) => {
-            const porId = new Map(listaEstufas.map((e) => [e.id, e]))
-            setEstufas(
-                conjuntos
-                    .map((c) => {
-                        const estufa = porId.get(c.estufa_id)
-                        return estufa
-                            ? { id: c.id, estufa_id: estufa.id, texto: estufa.marca }
-                            : null
-                    })
-                    .filter(Boolean)
-            )
+            setEstufas(listaEstufas)
+            setConjuntos(conjuntos)
         })
         .catch((e)=>setError(e.message))
     },[])
@@ -151,14 +165,25 @@ export default function DatosPrueba({datos, onChange}){
                 />
                 <Selector
                     label='Estufa'
-                    name='conjunto_pruebas_id'
-                    opciones={estufas}
-                    value={datos.prueba.conjunto_pruebas_id}
-                    onChange={manejar}
+                    name='estufa_id'
+                    opciones={estufas.map((e) => ({id: e.id, texto: e.marca}))}
+                    value={datos.prueba.estufa_id}
+                    onChange={(e) => elegirEstufa(e.target.value)}
                     onNuevo={()=>setModal('estufa')}
                     onEliminar={alEliminarEstufa}
                 />
-                <Campo label='Número Repeticion' type='number' name='numero_repeticion' value = {datos.prueba.numero_repeticion} onChange={manejar}/>
+                {datos.prueba.estufa_id && <Selector
+                    label='Conjunto de pruebas'
+                    name='conjunto_pruebas_id'
+                    opciones={conjuntos.filter((c) => String(c.estufa_id) === datos.prueba.estufa_id)
+                        .map((c) => ({ id: c.id, texto: `${codigoConjunto(c.id)} · ${c.descripcion || 'Sin descripción'}` }))}
+                    value={datos.prueba.conjunto_pruebas_id}
+                    onChange={(e) => elegirConjunto(e.target.value)}
+                    textoNuevo="Nuevo conjunto"
+                    onNuevo={() => { setDescripcion(''); setErrorConjunto(''); setModal('conjunto') }}
+                />}
+                <Campo label='Número de repetición' type='number' min='1' name='numero_repeticion'
+                    placeholder="Automático al guardar" value={datos.prueba.numero_repeticion} onChange={manejar}/>
                 <Campo label='Peso del recipiente del carbón (kg)' type='number' min='0' step='0.0001' name='peso_recipiente_carbon_kg' value={datos.prueba.peso_recipiente_carbon_kg} onChange={manejar}/>
             </div>
 
@@ -174,6 +199,21 @@ export default function DatosPrueba({datos, onChange}){
 
             <Modal titulo='Nueva Estufa' abierto={modal==='estufa'} onCerrar={() => setModal(null)}>
                 <FormEstufa onGuardado={alCrearEstufa} onCancelar={()=>setModal(null)}/>
+            </Modal>
+            <Modal titulo="Nuevo conjunto" abierto={modal === 'conjunto'} onCerrar={() => !creandoConjunto && setModal(null)}>
+                <form onSubmit={crearConjunto} className="space-y-4">
+                    <Campo label="Descripción del conjunto" placeholder="Ej. Ensayo base" required maxLength={500}
+                        value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+                    <p className="text-sm text-[#5d6862]">El código se asigna al crear el conjunto.</p>
+                    {errorConjunto && <p role="alert">{errorConjunto}</p>}
+                    <div className="flex justify-end gap-3">
+                        <button type="button" disabled={creandoConjunto} onClick={() => setModal(null)}>Cancelar</button>
+                        <button type="submit" disabled={creandoConjunto || !descripcion.trim()}
+                            className="rounded-md bg-[#0f6b4f] px-4 py-2 text-white disabled:opacity-60">
+                            {creandoConjunto ? "Creando…" : "Crear conjunto"}
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </Seccion>
     )

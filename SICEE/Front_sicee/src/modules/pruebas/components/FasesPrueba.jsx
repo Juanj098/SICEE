@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Campo } from "./Campo";
 import { FASES } from "../fases";
+import { errorMedicionFase } from "../guardado";
 
 const valor = (dato) =>
   dato === "" || dato === null || dato === undefined ? "—" : dato;
@@ -138,12 +139,34 @@ export default function FasesPrueba({
   datos,
   onVolver,
   onCambiarFase,
+  onCambiarPrueba,
   onCambiarOllaFase,
+  onGuardar,
+  guardando = false,
+  errorGuardado = "",
 }) {
   const [paso, setPaso] = useState(0);
 
   const fase = datos.fases?.[paso] ?? {};
   const info = FASES[paso];
+  const avisoMedicion = errorMedicionFase(fase, datos);
+  const avisoProtocolo = (() => {
+    if (fase.tipo_fase !== "baja_potencia" || !fase.t_inicial || !fase.t_final) return null;
+    const [h1, m1] = fase.t_inicial.split(":").map(Number);
+    const [h2, m2] = fase.t_final.split(":").map(Number);
+    const duracion = (h2 * 60 + m2) - (h1 * 60 + m1);
+    const olla1 = fase.ollas?.find((olla) => olla.numero_olla === 1);
+    const final = olla1?.temperatura_final_agua_c === "" ? NaN : Number(olla1?.temperatura_final_agua_c);
+    const ebullicion = datos.condiciones?.punto_ebullicion_c === "" ? NaN : Number(datos.condiciones?.punto_ebullicion_c);
+    const avisos = [];
+    if (Number.isFinite(duracion) && duracion !== 45) {
+      avisos.push(`La fase dura ${duracion} minutos; el protocolo indica aproximadamente 45 minutos. Verifica la duración registrada.`);
+    }
+    if (Number.isFinite(final) && Number.isFinite(ebullicion) && ebullicion - final > 6) {
+      avisos.push(`La temperatura final está ${ (ebullicion - final).toFixed(1) } °C bajo ebullición (más de 6 °C). Verifica las mediciones y evalúa la validez.`);
+    }
+    return avisos.length ? avisos : null;
+  })();
   const ollas = datos.ollas ?? [];
 
   // Sólo para mostrar: el promedio oficial lo calcula el backend.
@@ -185,6 +208,7 @@ export default function FasesPrueba({
 
         <p className="mt-1 text-sm text-[#5d6862]">
           Registra los datos de cada fase de la prueba.
+          {info.tipo === "inicio_caliente" && " Si no realizaste el inicio caliente, deja esta fase vacía y continúa."}
         </p>
 
         <div className="mt-4 flex flex-wrap gap-x-10 gap-y-3 rounded-xl bg-white px-5 py-4 text-sm">
@@ -197,7 +221,7 @@ export default function FasesPrueba({
           <div>
             <span className="text-[#5d6862]">Repetición</span>
             <p className="font-medium text-[#141a17]">
-              {valor(datos.prueba?.numero_repeticion)}
+              {datos.prueba?.numero_repeticion || "Automática al guardar"}
             </p>
           </div>
           <div>
@@ -235,6 +259,8 @@ export default function FasesPrueba({
                 {info.titulo}
               </h2>
               <p className="text-sm text-[#5d6862]">{info.descripcion}</p>
+              {info.tipo === "inicio_caliente" && <p className="mt-1 text-xs text-[#5d6862]">El agua empieza a temperatura ambiente y la estufa ya está caliente.</p>}
+              {info.tipo === "baja_potencia" && <p className="mt-1 text-xs text-[#5d6862]">Guía WBT: aproximadamente 45 min, manteniendo el agua cerca de 3 °C bajo ebullición. Aquí se capturan temperaturas inicial y final; no lecturas intermedias.</p>}
             </div>
           </div>
 
@@ -354,7 +380,7 @@ export default function FasesPrueba({
                         name={`t_inicial_olla_${olla.numero_olla}`}
                         type="number"
                         step="0.01"
-                        value={datosOlla.temperatura_inicial_agua_c}
+                        value={datosOlla.temperatura_inicial_agua_c ?? ""}
                         onChange={(e) =>
                           onCambiarOllaFase(
                             paso,
@@ -369,7 +395,7 @@ export default function FasesPrueba({
                         name={`t_final_olla_${olla.numero_olla}`}
                         type="number"
                         step="0.01"
-                        value={datosOlla.temperatura_final_agua_c}
+                        value={datosOlla.temperatura_final_agua_c ?? ""}
                         onChange={(e) =>
                           onCambiarOllaFase(
                             paso,
@@ -385,7 +411,7 @@ export default function FasesPrueba({
                         type="number"
                         min="0"
                         step="0.0001"
-                        value={datosOlla.peso_con_agua_inicial_kg}
+                        value={datosOlla.peso_con_agua_inicial_kg ?? ""}
                         onChange={(e) =>
                           onCambiarOllaFase(
                             paso,
@@ -401,7 +427,7 @@ export default function FasesPrueba({
                         type="number"
                         min="0"
                         step="0.0001"
-                        value={datosOlla.peso_con_agua_final_kg}
+                        value={datosOlla.peso_con_agua_final_kg ?? ""}
                         onChange={(e) =>
                           onCambiarOllaFase(
                             paso,
@@ -418,14 +444,40 @@ export default function FasesPrueba({
             </div>
           </div>
 
+          {avisoMedicion && <p aria-live="polite" className="mt-4 rounded-md bg-[#fdf0e3] p-3 text-sm">
+            {info.titulo}: {avisoMedicion}
+          </p>}
+          {avisoProtocolo?.map((aviso) => <p key={aviso} role="status" className="mt-4 rounded-md bg-[#fdf0e3] p-3 text-sm">
+            Aviso de protocolo: {aviso}
+          </p>)}
+          {paso === FASES.length - 1 && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={datos.prueba.es_valida}
+                  onChange={(e) => onCambiarPrueba("es_valida", e.target.checked)} />
+                Repetición válida para el promedio IWA
+              </label>
+              {!datos.prueba.es_valida && <Campo label="Motivo de invalidez" required maxLength={500}
+                value={datos.prueba.motivo_invalidez}
+                onChange={(e) => onCambiarPrueba("motivo_invalidez", e.target.value)} />}
+            </div>
+          )}
+          {errorGuardado && (
+            <p className="mt-4 rounded-md bg-[#fdf1ef] px-3 py-2 text-sm text-[#b3352c]">
+              {errorGuardado}
+            </p>
+          )}
+
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#e9f0ec] pt-5">
             <button
               type="button"
               onClick={() => (paso > 0 ? setPaso(paso - 1) : onVolver())}
+              disabled={guardando}
               className="inline-flex items-center gap-2 rounded-md border border-[#d8e0dc]
                          px-4 py-2.5 text-sm font-medium text-[#5d6862] transition
                          hover:bg-[#f7faf8] focus-visible:outline-none focus-visible:ring-2
-                         focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2"
+                         focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2
+                         disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
                 arrow_back
@@ -433,36 +485,32 @@ export default function FasesPrueba({
               Anterior
             </button>
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-md border border-[#cfe0d8]
-                           px-4 py-2.5 text-sm font-medium text-[#0f6b4f] transition
-                           hover:bg-[#f1f7f4] focus-visible:outline-none focus-visible:ring-2
-                           focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2"
-              >
-                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
-                  save
-                </span>
-                Guardar borrador
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  paso < FASES.length - 1 && setPaso(paso + 1)
-                }
-                className="inline-flex items-center gap-2 rounded-md bg-[#0f6b4f] px-4 py-2.5
-                           text-sm font-medium text-white transition hover:bg-[#0b5a42]
-                           focus-visible:outline-none focus-visible:ring-2
-                           focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2"
-              >
-                {paso === FASES.length - 1 ? "Finalizar" : "Siguiente"}
-                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
-                  {paso === FASES.length - 1 ? "check" : "arrow_forward"}
-                </span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (paso < FASES.length - 1) setPaso(paso + 1);
+                else onGuardar();
+              }}
+              disabled={guardando}
+              className="inline-flex items-center gap-2 rounded-md bg-[#0f6b4f] px-4 py-2.5
+                         text-sm font-medium text-white transition hover:bg-[#0b5a42]
+                         focus-visible:outline-none focus-visible:ring-2
+                         focus-visible:ring-[#0f6b4f] focus-visible:ring-offset-2
+                         disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {guardando
+                ? "Guardando…"
+                : paso === FASES.length - 1
+                  ? "Finalizar y guardar"
+                  : "Siguiente"}
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                {guardando
+                  ? "save"
+                  : paso === FASES.length - 1
+                    ? "check"
+                    : "arrow_forward"}
+              </span>
+            </button>
           </div>
         </div>
 

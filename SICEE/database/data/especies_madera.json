@@ -1,0 +1,792 @@
+[
+  {
+    "especie": "Average Hardwood",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 19.734,
+    "poder_calorifico_neto_mj_kg": 18.414,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 3,
+    "fuente": "Harker et al. (1982). Calorific values for wood and bark"
+  },
+  {
+    "especie": "Average Softwood",
+    "nombres_comunes": "Conifer",
+    "poder_calorifico_bruto_mj_kg": 20.817,
+    "poder_calorifico_neto_mj_kg": 19.497,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 3,
+    "fuente": "Harker et al. (1982). Calorific values for wood and bark"
+  },
+  {
+    "especie": "Abies Balsamea",
+    "nombres_comunes": "Balsam Fir",
+    "poder_calorifico_bruto_mj_kg": 18.916,
+    "poder_calorifico_neto_mj_kg": 17.596,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Acacia Auriculiformis",
+    "nombres_comunes": "Ear-Leaf Acacia, Ear-Pod Wattle",
+    "poder_calorifico_bruto_mj_kg": 20.37,
+    "poder_calorifico_neto_mj_kg": 19.05,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Acacia Decurrens",
+    "nombres_comunes": "King Wattle, Green Wattle, Sydney Black Wattle",
+    "poder_calorifico_bruto_mj_kg": 18.7,
+    "poder_calorifico_neto_mj_kg": 17.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Acacia Farnesiana",
+    "nombres_comunes": "Sweet Acacia, Sweet Wattle",
+    "poder_calorifico_bruto_mj_kg": 19.2,
+    "poder_calorifico_neto_mj_kg": 17.88,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Acacia Leucophloea",
+    "nombres_comunes": "Kikar, Kuteeera Gum",
+    "poder_calorifico_bruto_mj_kg": 21.8,
+    "poder_calorifico_neto_mj_kg": 20.48,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Acacia Mearnsi",
+    "nombres_comunes": "Black Wattle",
+    "poder_calorifico_bruto_mj_kg": 19.53,
+    "poder_calorifico_neto_mj_kg": 18.21,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Acacia Nilotica",
+    "nombres_comunes": "Egyptian Thorn, Babul (India), Babar (Pakistan)",
+    "poder_calorifico_bruto_mj_kg": 20.475,
+    "poder_calorifico_neto_mj_kg": 19.155,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Acacia Tortilis",
+    "nombres_comunes": "Umbrella Thorn",
+    "poder_calorifico_bruto_mj_kg": 18.48,
+    "poder_calorifico_neto_mj_kg": 17.16,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Acer Rubrum",
+    "nombres_comunes": "Red Maple",
+    "poder_calorifico_bruto_mj_kg": 18.545,
+    "poder_calorifico_neto_mj_kg": 17.225,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Albizia Falcataria",
+    "nombres_comunes": "Batai, Malucca Albizia, ,Placata",
+    "poder_calorifico_bruto_mj_kg": 18.1,
+    "poder_calorifico_neto_mj_kg": 16.78,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Albizia Lebbek",
+    "nombres_comunes": "Lebbek, East Indian Walnut Tree",
+    "poder_calorifico_bruto_mj_kg": 21.84,
+    "poder_calorifico_neto_mj_kg": 20.52,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Albizia Procera",
+    "nombres_comunes": "Albicia, Silver Bark Rain Tree",
+    "poder_calorifico_bruto_mj_kg": 19.7,
+    "poder_calorifico_neto_mj_kg": 18.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Alnus Nepalensis",
+    "nombres_comunes": "Nepal Alder",
+    "poder_calorifico_bruto_mj_kg": 17.15,
+    "poder_calorifico_neto_mj_kg": 15.83,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Alnus Rubra",
+    "nombres_comunes": "Red Alder",
+    "poder_calorifico_bruto_mj_kg": 19.32,
+    "poder_calorifico_neto_mj_kg": 18.0,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Alnus Rubra",
+    "nombres_comunes": "Red Alder",
+    "poder_calorifico_bruto_mj_kg": 18.545,
+    "poder_calorifico_neto_mj_kg": 17.225,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Alstonia Macrophylla",
+    "nombres_comunes": "Devil Tree",
+    "poder_calorifico_bruto_mj_kg": 19.2,
+    "poder_calorifico_neto_mj_kg": 17.88,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Anogeissus Latifolia",
+    "nombres_comunes": "Axle-Wood Tree, Dhausa (Hindi)",
+    "poder_calorifico_bruto_mj_kg": 20.58,
+    "poder_calorifico_neto_mj_kg": 19.26,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Anthocephalus Cadamba",
+    "nombres_comunes": "Labula (Indonesia)",
+    "poder_calorifico_bruto_mj_kg": 19.35,
+    "poder_calorifico_neto_mj_kg": 18.03,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Antidesma Ghaessimbilla",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 19.1,
+    "poder_calorifico_neto_mj_kg": 17.78,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Avicennia Officinalis",
+    "nombres_comunes": "Mangrove, Api-Api Sudu (Philippines)",
+    "poder_calorifico_bruto_mj_kg": 18.5,
+    "poder_calorifico_neto_mj_kg": 17.18,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Balanites Aegyptiaca",
+    "nombres_comunes": "Desert Date, Thorn Tree, Soapberry Tree",
+    "poder_calorifico_bruto_mj_kg": 19.32,
+    "poder_calorifico_neto_mj_kg": 18.0,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Bruguiera Gymnorrhiza",
+    "nombres_comunes": "Black Mangrove, Large-Leafed Mangrove",
+    "poder_calorifico_bruto_mj_kg": 20.4,
+    "poder_calorifico_neto_mj_kg": 19.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Bruguiera Parviflora",
+    "nombres_comunes": "Thua Shale, Slender-Fruited Orange Mangrove",
+    "poder_calorifico_bruto_mj_kg": 18.7,
+    "poder_calorifico_neto_mj_kg": 17.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Bruguiera Sexangula",
+    "nombres_comunes": "Orange Mangrove",
+    "poder_calorifico_bruto_mj_kg": 19.4,
+    "poder_calorifico_neto_mj_kg": 18.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Calliandra Calothyrsus",
+    "nombres_comunes": "Calliandra",
+    "poder_calorifico_bruto_mj_kg": 19.425,
+    "poder_calorifico_neto_mj_kg": 18.105,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Carya Spp",
+    "nombres_comunes": "Hickory",
+    "poder_calorifico_bruto_mj_kg": 18.684,
+    "poder_calorifico_neto_mj_kg": 17.364,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Cassia Fistula",
+    "nombres_comunes": "Cassia Stick Tree, Guayaba Cimarrona, Canafistula, Golden Shower, Indian Laburnum, Baton Casse, Chacara, Nanban-Saikati, Kachang Kayu (Woody Bean), Kallober, Keyok, Klober",
+    "poder_calorifico_bruto_mj_kg": 18.4,
+    "poder_calorifico_neto_mj_kg": 17.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Cassia Siamea",
+    "nombres_comunes": "Siamese Cassia",
+    "poder_calorifico_bruto_mj_kg": 18.8,
+    "poder_calorifico_neto_mj_kg": 17.48,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Casuarina Equistofolia",
+    "nombres_comunes": "Casuarina, She-Oak, Whistling Pine",
+    "poder_calorifico_bruto_mj_kg": 20.79,
+    "poder_calorifico_neto_mj_kg": 19.47,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Ceriops Tagal",
+    "nombres_comunes": "Tagal Mangrove, Kandal",
+    "poder_calorifico_bruto_mj_kg": 19.6,
+    "poder_calorifico_neto_mj_kg": 18.28,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Cocus Nucifera",
+    "nombres_comunes": "Coconut Palm",
+    "poder_calorifico_bruto_mj_kg": 19.0,
+    "poder_calorifico_neto_mj_kg": 17.68,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Cordia Dichotoma",
+    "nombres_comunes": "Anunang (Philippines), Bird Lime Tree",
+    "poder_calorifico_bruto_mj_kg": 18.4,
+    "poder_calorifico_neto_mj_kg": 17.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Dalbergia Latifolia",
+    "nombres_comunes": "East Indian Rosewood, Malabar Rosewood, Sitsal, Beete, Shisham",
+    "poder_calorifico_bruto_mj_kg": 19.8,
+    "poder_calorifico_neto_mj_kg": 18.48,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Dalbergia Sissoo",
+    "nombres_comunes": "Sissoo, Shisham, Karra, Shewa",
+    "poder_calorifico_bruto_mj_kg": 21.21,
+    "poder_calorifico_neto_mj_kg": 19.89,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Derris Indica",
+    "nombres_comunes": "India: Pongam, Ponga, Kona, Kanji, Karanja, Karanda; English: Indian Beech",
+    "poder_calorifico_bruto_mj_kg": 19.32,
+    "poder_calorifico_neto_mj_kg": 18.0,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Diospyros Philippinensis",
+    "nombres_comunes": "Kamagong (Philippines)",
+    "poder_calorifico_bruto_mj_kg": 18.6,
+    "poder_calorifico_neto_mj_kg": 17.28,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Diospyros Philosanthera",
+    "nombres_comunes": "Bolong-Eta (Philippines)",
+    "poder_calorifico_bruto_mj_kg": 18.1,
+    "poder_calorifico_neto_mj_kg": 16.78,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Emblica Ofiicinalis",
+    "nombres_comunes": "Madre De Cacao, Kakauati (Philippines), Mexican Lilac, Madera Negra",
+    "poder_calorifico_bruto_mj_kg": 21.84,
+    "poder_calorifico_neto_mj_kg": 20.52,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Eucalyptus Camaldulensis",
+    "nombres_comunes": "Red River Gum, Red Gum",
+    "poder_calorifico_bruto_mj_kg": 20.16,
+    "poder_calorifico_neto_mj_kg": 18.84,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Eucalyptus Deglupta",
+    "nombres_comunes": "Rainbow Gum Tree",
+    "poder_calorifico_bruto_mj_kg": 18.7,
+    "poder_calorifico_neto_mj_kg": 17.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Eucalyptus Globulus",
+    "nombres_comunes": "Southern Blue Gum, Fever Tree",
+    "poder_calorifico_bruto_mj_kg": 20.16,
+    "poder_calorifico_neto_mj_kg": 18.84,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Eucalyptus Grandis",
+    "nombres_comunes": "Rose Gum, Grand Eucalyptus",
+    "poder_calorifico_bruto_mj_kg": 19.75,
+    "poder_calorifico_neto_mj_kg": 18.43,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Fagus Spp",
+    "nombres_comunes": "Beech",
+    "poder_calorifico_bruto_mj_kg": 18.916,
+    "poder_calorifico_neto_mj_kg": 17.596,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Gigantochloa Apus",
+    "nombres_comunes": "Pring Tali, Tabasheer Bamboo",
+    "poder_calorifico_bruto_mj_kg": 18.4,
+    "poder_calorifico_neto_mj_kg": 17.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Gliricidia Sepium",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 20.58,
+    "poder_calorifico_neto_mj_kg": 19.26,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Gmelina Arborea",
+    "nombres_comunes": "Gmelina, Gumhar (India)",
+    "poder_calorifico_bruto_mj_kg": 20.16,
+    "poder_calorifico_neto_mj_kg": 18.84,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Lagerstroemia Speciosa",
+    "nombres_comunes": "Queen's Crape Myrtle, Giant Crape Myrtle",
+    "poder_calorifico_bruto_mj_kg": 19.3,
+    "poder_calorifico_neto_mj_kg": 17.98,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Leucaena Leucocephala",
+    "nombres_comunes": "Leucaena, Ipil-Ipil (Philippines), Uaxin (Latin America), Lamtora (Indonesia), Lead Tree",
+    "poder_calorifico_bruto_mj_kg": 18.48,
+    "poder_calorifico_neto_mj_kg": 17.16,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Melia Azedarach",
+    "nombres_comunes": "China Berry, Persian Lilac, Bead Tree, Cape Lilac",
+    "poder_calorifico_bruto_mj_kg": 21.46,
+    "poder_calorifico_neto_mj_kg": 20.14,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Pinus Elliotii",
+    "nombres_comunes": "Southern Pine",
+    "poder_calorifico_bruto_mj_kg": 19.961,
+    "poder_calorifico_neto_mj_kg": 18.641,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Pinus Ponderosa",
+    "nombres_comunes": "Ponderosa Pine",
+    "poder_calorifico_bruto_mj_kg": 18.684,
+    "poder_calorifico_neto_mj_kg": 17.364,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Pithecellobium Dulce",
+    "nombres_comunes": "Quamachil, Guamuchil (Mexico), Manila Tamarind",
+    "poder_calorifico_bruto_mj_kg": 22.68,
+    "poder_calorifico_neto_mj_kg": 21.36,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Platanus Occidentalis",
+    "nombres_comunes": "Sycamore",
+    "poder_calorifico_bruto_mj_kg": 18.545,
+    "poder_calorifico_neto_mj_kg": 17.225,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Populus Euphratica",
+    "nombres_comunes": "Euphrates Poplar, Saf-Saf, Indian Poplar",
+    "poder_calorifico_bruto_mj_kg": 21.057,
+    "poder_calorifico_neto_mj_kg": 19.737,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Populus Trichocarpa",
+    "nombres_comunes": "Black Cottonwood",
+    "poder_calorifico_bruto_mj_kg": 20.425,
+    "poder_calorifico_neto_mj_kg": 19.105,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Prosopis Cineraria",
+    "nombres_comunes": "Jand, Khejri (India)",
+    "poder_calorifico_bruto_mj_kg": 21.0,
+    "poder_calorifico_neto_mj_kg": 19.68,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Prosopis Pallida",
+    "nombres_comunes": "Kiawe",
+    "poder_calorifico_bruto_mj_kg": 19.75,
+    "poder_calorifico_neto_mj_kg": 18.43,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Pseudotsuga Menziesii",
+    "nombres_comunes": "Douglas Fir",
+    "poder_calorifico_bruto_mj_kg": 20.634,
+    "poder_calorifico_neto_mj_kg": 19.314,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Psidium Guajava",
+    "nombres_comunes": "Guava, Guayaba",
+    "poder_calorifico_bruto_mj_kg": 20.126,
+    "poder_calorifico_neto_mj_kg": 18.806,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Quercus Bicolor",
+    "nombres_comunes": "White Oak",
+    "poder_calorifico_bruto_mj_kg": 18.916,
+    "poder_calorifico_neto_mj_kg": 17.596,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Quercus Rubra",
+    "nombres_comunes": "Red Oak",
+    "poder_calorifico_bruto_mj_kg": 18.684,
+    "poder_calorifico_neto_mj_kg": 17.364,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Rhizophera Spp",
+    "nombres_comunes": "Mangrove Spp (Also Avicennia Spp)",
+    "poder_calorifico_bruto_mj_kg": 17.43,
+    "poder_calorifico_neto_mj_kg": 16.11,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Sapium Sebiferum",
+    "nombres_comunes": "Chinese Tallow Tree, Soap Tree, Tarchabi (Pahari) Shishum (India)",
+    "poder_calorifico_bruto_mj_kg": 17.663,
+    "poder_calorifico_neto_mj_kg": 16.343,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Schima Noronhae",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 20.0,
+    "poder_calorifico_neto_mj_kg": 18.68,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Schleichera Oleosa",
+    "nombres_comunes": "Kosambi (Indonesia), Lac Tree",
+    "poder_calorifico_bruto_mj_kg": 18.7,
+    "poder_calorifico_neto_mj_kg": 17.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Sesbania Grandiflora",
+    "nombres_comunes": "Scarlet Wisteria Tree, Agati, Corkwood Tree, West Indian Pea",
+    "poder_calorifico_bruto_mj_kg": 19.3,
+    "poder_calorifico_neto_mj_kg": 17.98,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Swietenia Macrophylla",
+    "nombres_comunes": "Brazilian Mahogany, Caoba, Honduras Mahogany, Big Leaf Mahogany",
+    "poder_calorifico_bruto_mj_kg": 20.7,
+    "poder_calorifico_neto_mj_kg": 19.38,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Syzygium Cumini",
+    "nombres_comunes": "Jambolan, Java Plum",
+    "poder_calorifico_bruto_mj_kg": 20.16,
+    "poder_calorifico_neto_mj_kg": 18.84,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Thuja Plicata",
+    "nombres_comunes": "Western Red Cedar",
+    "poder_calorifico_bruto_mj_kg": 22.514,
+    "poder_calorifico_neto_mj_kg": 21.194,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Trema Spp",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 18.9,
+    "poder_calorifico_neto_mj_kg": 17.58,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Tsuga Canadensis",
+    "nombres_comunes": "Eastern Hemlock",
+    "poder_calorifico_bruto_mj_kg": 19.52,
+    "poder_calorifico_neto_mj_kg": 18.2,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Tsuga Heterophylla",
+    "nombres_comunes": "Western Hemlock",
+    "poder_calorifico_bruto_mj_kg": 19.52,
+    "poder_calorifico_neto_mj_kg": 18.2,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Ulmus Spp",
+    "nombres_comunes": "Elm",
+    "poder_calorifico_bruto_mj_kg": 18.963,
+    "poder_calorifico_neto_mj_kg": 17.643,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 2,
+    "fuente": "Cheremisinoff (1980). Properties of Wood"
+  },
+  {
+    "especie": "Xylocarpus Granatum",
+    "nombres_comunes": "Cannonball Mangrove, Cedar Mangrove",
+    "poder_calorifico_bruto_mj_kg": 16.3,
+    "poder_calorifico_neto_mj_kg": 14.98,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Xylocarpus Moluccensis",
+    "nombres_comunes": "Cedar Mangrove",
+    "poder_calorifico_bruto_mj_kg": 15.4,
+    "poder_calorifico_neto_mj_kg": 14.08,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  },
+  {
+    "especie": "Zizyphus Mauritania",
+    "nombres_comunes": "Indian Jujube, Indian Plum",
+    "poder_calorifico_bruto_mj_kg": 20.58,
+    "poder_calorifico_neto_mj_kg": 19.26,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 1,
+    "fuente": "NAS (1980). Firewood Crops"
+  },
+  {
+    "especie": "Zizyphus Talanai",
+    "nombres_comunes": "",
+    "poder_calorifico_bruto_mj_kg": 18.3,
+    "poder_calorifico_neto_mj_kg": 16.98,
+    "poder_calorifico_carbon_mj_kg": 29.5,
+    "contenido_carbono_pct": 50.0,
+    "fuente_codigo": 4,
+    "fuente": "FAO (1993). Energy and Environment Basics (RWEDP)"
+  }
+]
